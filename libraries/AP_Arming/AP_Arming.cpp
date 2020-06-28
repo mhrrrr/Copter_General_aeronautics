@@ -34,6 +34,10 @@
 
 extern const AP_HAL::HAL& hal;
 
+// NPNT
+bool AP_Arming::npnt_allowed = false;
+char AP_Arming::npnt_reason[50]{};
+
 const AP_Param::GroupInfo AP_Arming::var_info[] = {
 
     // @Param: REQUIRE
@@ -561,6 +565,19 @@ bool AP_Arming::board_voltage_checks(bool report)
     return true;
 }
 
+bool AP_Arming::npnt_checks(bool report){
+	if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_NPNT)) {
+		if(!npnt_allowed) {
+			if(npnt_reason[0]==0){
+				memcpy(&npnt_reason,"NPNT not Initialized",50);
+			}
+			check_failed(ARMING_CHECK_NPNT, report, (const char*)&npnt_reason);
+			return false;
+		}
+	}
+	return true;
+}
+
 bool AP_Arming::pre_arm_checks(bool report)
 {
 #if !APM_BUILD_TYPE(APM_BUILD_ArduCopter)
@@ -580,7 +597,8 @@ bool AP_Arming::pre_arm_checks(bool report)
         &  logging_checks(report)
         &  manual_transmitter_checks(report)
         &  servo_checks(report)
-        &  board_voltage_checks(report);
+        &  board_voltage_checks(report)
+		&  npnt_checks(report);
 }
 
 bool AP_Arming::arm_checks(uint8_t method)

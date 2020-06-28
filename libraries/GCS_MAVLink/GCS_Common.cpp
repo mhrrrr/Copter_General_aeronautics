@@ -22,6 +22,7 @@
 #include <AP_Airspeed/AP_Airspeed.h>
 #include <AP_Gripper/AP_Gripper.h>
 #include <AP_BLHeli/AP_BLHeli.h>
+#include <AP_Arming/AP_Arming.h>
 
 #include "GCS.h"
 
@@ -2353,8 +2354,22 @@ void GCS_MAVLINK::handle_common_message(mavlink_message_t *msg)
     case MAVLINK_MSG_ID_SYSTEM_TIME:
         handle_system_time_message(msg);
         break;
+
+    // NPNT
+    case MAVLINK_MSG_ID_NPNT_STATUS:
+    	handle_npnt_status_message(msg);
+    	break;
     }
 
+}
+
+// NPNT
+void GCS_MAVLINK::handle_npnt_status_message(mavlink_message_t *msg){
+    mavlink_npnt_status_t packet;
+    mavlink_msg_npnt_status_decode(msg, &packet);
+
+    AP_Arming::npnt_allowed = bool(packet.arming_allowed);
+    memcpy(&AP_Arming::npnt_reason, packet.reason, MAVLINK_MSG_NPNT_STATUS_FIELD_REASON_LEN);
 }
 
 void GCS_MAVLINK::handle_common_mission_message(mavlink_message_t *msg)

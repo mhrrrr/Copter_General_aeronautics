@@ -24,6 +24,7 @@ public:
         ARMING_CHECK_LOGGING    = 0x0400,
         ARMING_CHECK_SWITCH     = 0x0800,
         ARMING_CHECK_GPS_CONFIG = 0x1000,
+		ARMING_CHECK_NPNT		= 0x2000,
     };
 
     enum ArmingMethod {
@@ -67,6 +68,11 @@ public:
     ArmingRudder get_rudder_arming_type() const { return (ArmingRudder)_rudder_arming.get(); }
 
     static const struct AP_Param::GroupInfo        var_info[];
+
+    // NPNT
+	static bool npnt_allowed;
+	static char npnt_reason[50];
+	bool npnt_checks(bool report);
 
 protected:
     AP_Arming(const AP_AHRS &ahrs_ref, Compass &compass,
