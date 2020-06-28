@@ -1362,6 +1362,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
          */
 
         Vector3f pos_neu_cm;  // position (North, East, Up coordinates) in centimeters
+        bool terrain_alt=false;
 
         if(!pos_ignore) {
             // sanity check location
@@ -1380,6 +1381,8 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
                     loc.flags.terrain_alt = false;
                     break;
                 case MAV_FRAME_GLOBAL_TERRAIN_ALT:
+                	loc.flags.relative_alt = true;
+                	loc.flags.terrain_alt = true;
                 case MAV_FRAME_GLOBAL_TERRAIN_ALT_INT:
                     loc.flags.relative_alt = true;
                     loc.flags.terrain_alt = true;
@@ -1395,6 +1398,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
                     break;
             }
             pos_neu_cm = copter.pv_location_to_vector(loc);
+            terrain_alt = loc.flags.terrain_alt;
         }
 
         // prepare yaw
@@ -1419,7 +1423,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
             copter.mode_guided.set_velocity(Vector3f(packet.vx * 100.0f, packet.vy * 100.0f, -packet.vz * 100.0f), !yaw_ignore, yaw_cd, !yaw_rate_ignore, yaw_rate_cds, yaw_relative);
             result = MAV_RESULT_ACCEPTED;
         } else if (!pos_ignore && vel_ignore && acc_ignore) {
-            if (copter.mode_guided.set_destination(pos_neu_cm, !yaw_ignore, yaw_cd, !yaw_rate_ignore, yaw_rate_cds, yaw_relative)) {
+            if (copter.mode_guided.set_destination(pos_neu_cm, !yaw_ignore, yaw_cd, !yaw_rate_ignore, yaw_rate_cds, yaw_relative, terrain_alt)) {
                 result = MAV_RESULT_ACCEPTED;
             } else {
                 result = MAV_RESULT_FAILED;
