@@ -53,7 +53,9 @@ public:
         MOTOR_FRAME_TYPE_VTAIL = 4,
         MOTOR_FRAME_TYPE_ATAIL = 5,
         MOTOR_FRAME_TYPE_Y6B = 10,
-        MOTOR_FRAME_TYPE_Y6F = 11 // for FireFlyY6
+        MOTOR_FRAME_TYPE_Y6F = 11, // for FireFlyY6
+		MOTOR_FRAME_TYPE_ASYMM_PLUS = 12,
+		MOTOR_FRAME_TYPE_ASYMM_X = 13
     };
 
     // Constructor
