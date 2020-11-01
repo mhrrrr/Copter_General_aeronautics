@@ -1399,6 +1399,9 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
             }
             pos_neu_cm = copter.pv_location_to_vector(loc);
             terrain_alt = loc.flags.terrain_alt;
+            if(terrain_alt){
+            	pos_neu_cm.z = loc.alt;
+            }
         }
 
         // prepare yaw
