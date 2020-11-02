@@ -11,6 +11,8 @@ void Copter::failsafe_radio_on_event()
         return;
     }
 
+    gcs().send_text(MAV_SEVERITY_CRITICAL,"Failsafe: Radio");
+
     if (should_disarm_on_failsafe()) {
         init_disarm_motors();
     } else {
