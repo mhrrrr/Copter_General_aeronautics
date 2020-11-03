@@ -419,32 +419,24 @@ void Copter::ModeRTL::compute_return_target(bool terrain_following_allowed)
 
     // decide if we should use terrain altitudes
     rtl_path.terrain_used = copter.terrain_use() && terrain_following_allowed;
-    bool rangefinder_available = false;
-    
     if (rtl_path.terrain_used) {
-    	if(copter.rangefinder_alt_ok()){
-    		rangefinder_available = true;
-    		curr_alt = copter.rangefinder_state.alt_cm;
-    	}
-    	else{
-			// attempt to retrieve terrain alt for current location, stopping point and origin
-			int32_t origin_terr_alt, return_target_terr_alt;
-			if (!rtl_path.origin_point.get_alt_cm(Location_Class::ALT_FRAME_ABOVE_TERRAIN, origin_terr_alt) ||
-				!rtl_path.return_target.get_alt_cm(Location_Class::ALT_FRAME_ABOVE_TERRAIN, return_target_terr_alt) ||
-				!copter.current_loc.get_alt_cm(Location_Class::ALT_FRAME_ABOVE_TERRAIN, curr_alt)) {
-				rtl_path.terrain_used = false;
-				copter.Log_Write_Error(ERROR_SUBSYSTEM_TERRAIN, ERROR_CODE_MISSING_TERRAIN_DATA);
-			}
-    	}
+        // attempt to retrieve terrain alt for current location, stopping point and origin
+        int32_t origin_terr_alt, return_target_terr_alt;
+        if (!rtl_path.origin_point.get_alt_cm(Location_Class::ALT_FRAME_ABOVE_TERRAIN, origin_terr_alt) ||
+            !rtl_path.return_target.get_alt_cm(Location_Class::ALT_FRAME_ABOVE_TERRAIN, return_target_terr_alt) ||
+            !copter.current_loc.get_alt_cm(Location_Class::ALT_FRAME_ABOVE_TERRAIN, curr_alt)) {
+            rtl_path.terrain_used = false;
+            copter.Log_Write_Error(ERROR_SUBSYSTEM_TERRAIN, ERROR_CODE_MISSING_TERRAIN_DATA);
+        }
     }
 
     // convert return-target alt (which is an absolute alt) to alt-above-home or alt-above-terrain
-    if (!rtl_path.terrain_used || (!rtl_path.return_target.change_alt_frame(Location_Class::ALT_FRAME_ABOVE_TERRAIN) && !rangefinder_available)) {
-		if (!rtl_path.return_target.change_alt_frame(Location_Class::ALT_FRAME_ABOVE_HOME)) {
-			// this should never happen but just in case
-			rtl_path.return_target.set_alt_cm(0, Location_Class::ALT_FRAME_ABOVE_HOME);
-		}
-		rtl_path.terrain_used = false;
+    if (!rtl_path.terrain_used || !rtl_path.return_target.change_alt_frame(Location_Class::ALT_FRAME_ABOVE_TERRAIN)) {
+        if (!rtl_path.return_target.change_alt_frame(Location_Class::ALT_FRAME_ABOVE_HOME)) {
+            // this should never happen but just in case
+            rtl_path.return_target.set_alt_cm(0, Location_Class::ALT_FRAME_ABOVE_HOME);
+        }
+        rtl_path.terrain_used = false;
     }
 
     // set new target altitude to return target altitude
