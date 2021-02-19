@@ -354,6 +354,9 @@ protected:
     virtual bool should_zero_rc_outputs_on_reboot() const { return false; }
     virtual MAV_RESULT handle_preflight_reboot(const mavlink_command_long_t &packet);
 
+    // NPNT
+    void handle_npnt_status_message(const mavlink_message_t &msg);
+
     // reset a message interval via mavlink:
     MAV_RESULT handle_command_set_message_interval(const mavlink_command_long_t &packet);
     MAV_RESULT handle_command_get_message_interval(const mavlink_command_long_t &packet);
