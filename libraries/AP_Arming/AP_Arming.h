@@ -85,7 +85,7 @@ public:
 
     // NPNT
 	static bool npnt_allowed;
-	static char npnt_reason[50];
+	static char npnt_reason[40];
 	bool npnt_checks(bool report);
 
 protected:

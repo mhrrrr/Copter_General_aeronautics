@@ -65,7 +65,7 @@ extern const AP_HAL::HAL& hal;
 
 // NPNT
 bool AP_Arming::npnt_allowed = false;
-char AP_Arming::npnt_reason[50]{};
+char AP_Arming::npnt_reason[40]{};
 
 const AP_Param::GroupInfo AP_Arming::var_info[] = {
 
@@ -701,9 +701,11 @@ bool AP_Arming::npnt_checks(bool report){
 	if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_NPNT)) {
 		if(!npnt_allowed) {
 			if(npnt_reason[0]==0){
-				memcpy(&npnt_reason,"NPNT not Initialized",50);
+                check_failed(ARMING_CHECK_NPNT, report, "NPNT not Initialized");
 			}
-			check_failed(ARMING_CHECK_NPNT, report, "%s",(const char*)&npnt_reason);
+            else{
+                check_failed(ARMING_CHECK_NPNT, report, "%s",(const char*)&npnt_reason);
+            }
 			return false;
 		}
 	}
