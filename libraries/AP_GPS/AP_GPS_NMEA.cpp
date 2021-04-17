@@ -359,7 +359,7 @@ bool AP_GPS_NMEA::_term_complete()
             _gps_data_good = _term[0] == 'A';
             break;
         case _GPS_SENTENCE_GGA + 6: // Fix data (GGA)
-            _gps_data_good = _term[0] > '0';
+            _gps_data_good = _term[0] >= '0';
             _new_quality_indicator = _term[0] - '0';
             break;
         case _GPS_SENTENCE_VTG + 9: // validity (VTG) (we may not see this field)
