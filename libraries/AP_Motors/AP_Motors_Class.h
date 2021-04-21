@@ -61,7 +61,8 @@ public:
         MOTOR_FRAME_TYPE_I = 15, // (sideways H) octo only
         MOTOR_FRAME_TYPE_BF_X_REV = 18, // X frame, betaflight ordering, reversed motors
         MOTOR_FRAME_TYPE_CA02 = 19,
-        MOTOR_FRAME_TYPE_CA04 = 20
+        MOTOR_FRAME_TYPE_CA04 = 20,
+        MOTOR_FRAME_TYPE_CA04_CORR = 21
     };
 
     // Constructor
