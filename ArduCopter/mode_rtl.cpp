@@ -427,20 +427,21 @@ void ModeRTL::compute_return_target()
     int32_t curr_alt = copter.current_loc.alt;
 
     // decide if we should use terrain altitudes
-    rtl_path.terrain_used = copter.terrain_use() && terrain_following_allowed;
+    rtl_path.terrain_used = copter.rangefinder_alt_ok() && terrain_following_allowed; // copter.terrain_use() && terrain_following_allowed;
     if (rtl_path.terrain_used) {
-        // attempt to retrieve terrain alt for current location, stopping point and origin
-        int32_t origin_terr_alt, return_target_terr_alt;
-        if (!rtl_path.origin_point.get_alt_cm(Location::AltFrame::ABOVE_TERRAIN, origin_terr_alt) ||
-            !rtl_path.return_target.get_alt_cm(Location::AltFrame::ABOVE_TERRAIN, return_target_terr_alt) ||
-            !copter.current_loc.get_alt_cm(Location::AltFrame::ABOVE_TERRAIN, curr_alt)) {
+        if (copter.rangefinder_state.alt_cm) {
+            curr_alt = copter.rangefinder_state.alt_cm;
+            // set return_target.alt
+            rtl_path.return_target.set_alt_cm(MAX(curr_alt + MAX(0, g.rtl_climb_min), MAX(g.rtl_altitude, RTL_ALT_MIN)), Location::AltFrame::ABOVE_TERRAIN);
+        } else {
+            // fallback to relative alt and warn user
             rtl_path.terrain_used = false;
             AP::logger().Write_Error(LogErrorSubsystem::TERRAIN, LogErrorCode::MISSING_TERRAIN_DATA);
         }
     }
 
     // convert return-target alt (which is an absolute alt) to alt-above-home or alt-above-terrain
-    if (!rtl_path.terrain_used || !rtl_path.return_target.change_alt_frame(Location::AltFrame::ABOVE_TERRAIN)) {
+    if (!rtl_path.terrain_used) {
         if (!rtl_path.return_target.change_alt_frame(Location::AltFrame::ABOVE_HOME)) {
             // this should never happen but just in case
             rtl_path.return_target.set_alt_cm(0, Location::AltFrame::ABOVE_HOME);
