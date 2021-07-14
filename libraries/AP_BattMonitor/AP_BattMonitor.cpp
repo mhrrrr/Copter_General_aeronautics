@@ -8,6 +8,7 @@
 #include "AP_BattMonitor_Sum.h"
 #include "AP_BattMonitor_FuelFlow.h"
 #include "AP_BattMonitor_FuelLevel_PWM.h"
+#include "AP_BattMonitor_GA_MAVlink.h"
 
 #include <AP_HAL/AP_HAL.h>
 
@@ -113,6 +114,9 @@ AP_BattMonitor::init()
             case AP_BattMonitor_Params::BattMonitor_TYPE_ANALOG_VOLTAGE_ONLY:
             case AP_BattMonitor_Params::BattMonitor_TYPE_ANALOG_VOLTAGE_AND_CURRENT:
                 drivers[instance] = new AP_BattMonitor_Analog(*this, state[instance], _params[instance]);
+                break;
+            case AP_BattMonitor_Params::BattMonitor_TYPE_GA_MAVLink:
+                drivers[instance] = new AP_BattMonitor_GA_MAVlink(*this, state[instance], _params[instance]);
                 break;
 #if HAL_BATTMON_SMBUS_ENABLE
             case AP_BattMonitor_Params::BattMonitor_TYPE_SOLO:
@@ -537,6 +541,15 @@ bool AP_BattMonitor::reset_remaining(uint16_t battery_mask, float percentage)
         AP_Notify::flags.failsafe_battery = false;
     }
     return ret;
+}
+
+// handle mavlink GA_MAVLINK messages
+void AP_BattMonitor::handle_ga_mavlink_msg(int voltage, int current, int mah) {
+    for (uint8_t i = 0; i < _num_instances; i++) {
+        if(get_type(i)==AP_BattMonitor_Params::BattMonitor_TYPE_GA_MAVLink){
+            drivers[i]->handle_ga_mavlink_msg(voltage, current, mah);
+        }
+    }
 }
 
 namespace AP {

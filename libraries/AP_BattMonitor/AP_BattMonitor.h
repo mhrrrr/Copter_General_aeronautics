@@ -171,6 +171,9 @@ public:
     // reset battery remaining percentage
     bool reset_remaining(uint16_t battery_mask, float percentage);
 
+    // handle mavlink GA_MAVLINK messages
+    void handle_ga_mavlink_msg(int voltage, int current, int mah);
+
     static const struct AP_Param::GroupInfo var_info[];
 
 protected:

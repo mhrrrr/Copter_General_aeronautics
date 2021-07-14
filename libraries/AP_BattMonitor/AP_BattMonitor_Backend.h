@@ -65,6 +65,9 @@ public:
     // reset remaining percentage to given value
     virtual bool reset_remaining(float percentage);
 
+    // handle mavlink GA_MAVLINK messages
+    virtual void handle_ga_mavlink_msg(int voltage, int current, int mah) {}
+
 protected:
     AP_BattMonitor                      &_mon;      // reference to front-end
     AP_BattMonitor::BattMonitor_State   &_state;    // reference to this instances state (held in the front-end)

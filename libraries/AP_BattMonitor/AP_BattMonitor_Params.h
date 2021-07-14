@@ -28,6 +28,7 @@ public:
         BattMonitor_TYPE_SUI3                       = 13,
         BattMonitor_TYPE_SUI6                       = 14,
         BattMonitor_TYPE_NeoDesign                  = 15,
+        BattMonitor_TYPE_GA_MAVLink                 = 16,
     };
 
     // low voltage sources (used for BATT_LOW_TYPE parameter)
