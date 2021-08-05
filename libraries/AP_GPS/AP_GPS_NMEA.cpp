@@ -293,13 +293,22 @@ bool AP_GPS_NMEA::_term_complete()
                     break;
                 case _GPS_SENTENCE_HDT:
                     _last_HDT_ms = now;
-                    state.gps_yaw = wrap_360(_new_gps_yaw*0.01f);
-                    state.have_gps_yaw = true;
+                    if(_new_gps_yaw>=0){
+                        state.gps_yaw = wrap_360(_new_gps_yaw*0.01f);
+                        state.have_gps_yaw = true;
+                        state.gps_yaw_accuracy = 5;
+                        state.have_gps_yaw_accuracy = true;
+                    }
+                    else{
+                        state.have_gps_yaw = false;
+                        state.have_gps_yaw_accuracy = false;
+                    }
                     // remember that we are setup to provide yaw. With
                     // a NMEA GPS we can only tell if the GPS is
                     // configured to provide yaw when it first sends a
                     // HDT sentence.
                     state.gps_yaw_configured = true;
+                    
                     break;
                 }
             } else {
@@ -413,8 +422,13 @@ bool AP_GPS_NMEA::_term_complete()
             _new_speed = (_parse_decimal_100(_term) * 514) / 1000;       // knots-> m/sec, approximiates * 0.514
             break;
         case _GPS_SENTENCE_HDT + 1: // Course (HDT)
-            _new_gps_yaw = _parse_decimal_100(_term);
+        {
+            long temp_yaw = _parse_decimal_100(_term);
+            if(_new_gps_yaw>=0 || temp_yaw != 0){
+                _new_gps_yaw = temp_yaw;
+            }
             break;
+        }
         case _GPS_SENTENCE_RMC + 8: // Course (GPRMC)
         case _GPS_SENTENCE_VTG + 1: // Course (VTG)
             _new_course = _parse_decimal_100(_term);
