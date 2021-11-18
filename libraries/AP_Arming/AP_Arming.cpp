@@ -72,6 +72,10 @@
 
 extern const AP_HAL::HAL& hal;
 
+// NPNT
+bool AP_Arming::npnt_allowed = false;
+char AP_Arming::npnt_reason[40]{};
+
 const AP_Param::GroupInfo AP_Arming::var_info[] = {
 
     // @Param{Plane, Rover}: REQUIRE
@@ -798,6 +802,22 @@ bool AP_Arming::board_voltage_checks(bool report)
 
     return true;
 }
+ 
+// NPNT check
+bool AP_Arming::npnt_checks(bool report){
+	if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_NPNT)) {
+		if(!npnt_allowed) {
+			if(npnt_reason[0]==0) {
+				check_failed(ARMING_CHECK_NPNT, report, "NPNT not Initialized");
+			}
+            else {
+                check_failed(ARMING_CHECK_NPNT, report, "%s",(const char*)&npnt_reason);
+            }
+			return false;
+		}
+	}
+	return true;
+}
 
 /*
   check base system operations
@@ -1159,7 +1179,8 @@ bool AP_Arming::pre_arm_checks(bool report)
         &  visodom_checks(report)
         &  aux_auth_checks(report)
         &  disarm_switch_checks(report)
-        &  fence_checks(report);
+        &  fence_checks(report)
+        &  npnt_checks(report);
 }
 
 bool AP_Arming::arm_checks(AP_Arming::Method method)

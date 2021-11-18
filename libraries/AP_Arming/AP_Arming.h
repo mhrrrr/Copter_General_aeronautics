@@ -37,6 +37,7 @@ public:
         ARMING_CHECK_AUX_AUTH    = (1U << 17),
         ARMING_CHECK_VISION      = (1U << 18),
         ARMING_CHECK_FFT         = (1U << 19),
+        ARMING_CHECK_NPNT        = (1U << 20),
     };
 
     enum class Method {
@@ -119,6 +120,11 @@ public:
     void set_aux_auth_failed(uint8_t auth_id, const char* fail_msg);
 
     static const struct AP_Param::GroupInfo        var_info[];
+
+    // NPNT
+	static bool npnt_allowed;
+	static char npnt_reason[40];
+	bool npnt_checks(bool report);
 
     // method that was last used for disarm; invalid unless the
     // vehicle has been disarmed at least once.

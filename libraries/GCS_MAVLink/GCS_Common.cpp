@@ -3538,8 +3538,21 @@ void GCS_MAVLINK::handle_common_message(const mavlink_message_t &msg)
     case MAVLINK_MSG_ID_LANDING_TARGET:
         handle_landing_target(msg);
         break;
-    }
 
+    case MAVLINK_MSG_ID_NPNT_STATUS: // NPNT
+    	handle_npnt_status_message(msg);
+    	break;
+    }
+}
+
+// NPNT
+void GCS_MAVLINK::handle_npnt_status_message(const mavlink_message_t &msg)
+{
+    mavlink_npnt_status_t packet;
+    mavlink_msg_npnt_status_decode(&msg, &packet);
+
+    AP_Arming::npnt_allowed = bool(packet.arming_allowed);
+    memcpy(&AP_Arming::npnt_reason, packet.reason, MAVLINK_MSG_NPNT_STATUS_FIELD_REASON_LEN);
 }
 
 void GCS_MAVLINK::handle_common_mission_message(const mavlink_message_t &msg)
