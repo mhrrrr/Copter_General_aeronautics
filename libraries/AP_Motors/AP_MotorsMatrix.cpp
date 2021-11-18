@@ -763,6 +763,24 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
                     add_motor(AP_MOTORS_MOT_5,  -90, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 5);
                     add_motor(AP_MOTORS_MOT_6,  -30, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  6);
                     break;
+                case MOTOR_FRAME_TYPE_CA02:
+                	add_motor_raw(AP_MOTORS_MOT_1, -1, 0, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
+                	add_motor_raw(AP_MOTORS_MOT_2, 1, 0, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 5);
+                	add_motor_raw(AP_MOTORS_MOT_3, 0.35, 1, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  6);
+                	add_motor_raw(AP_MOTORS_MOT_4, -0.35, -1, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
+                	add_motor_raw(AP_MOTORS_MOT_5, -0.35, 1, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
+                	add_motor_raw(AP_MOTORS_MOT_6, 0.35, -1, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
+					success = true;
+                    break;
+                case MOTOR_FRAME_TYPE_CA04: //CA04 corrected frame
+                	add_motor_raw(AP_MOTORS_MOT_1, 0, 0.765+0.047, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 1);
+                	add_motor_raw(AP_MOTORS_MOT_2, 0, -0.765+0.047, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+                	add_motor_raw(AP_MOTORS_MOT_3, 0.8287, -0.4443+0.047, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+                	add_motor_raw(AP_MOTORS_MOT_4, -0.8287, 0.4443+0.047, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+                	add_motor_raw(AP_MOTORS_MOT_5, 0.8287, 0.4443+0.047, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+                	add_motor_raw(AP_MOTORS_MOT_6, -0.8287, -0.4443+0.047, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 3);
+					success = true;
+                    break;
                 default:
                     // hexa frame class does not support this frame type
                     _frame_type_string = "UNSUPPORTED";

@@ -69,6 +69,8 @@ public:
         MOTOR_FRAME_TYPE_NYT_PLUS = 16, // plus frame, no differential torque for yaw
         MOTOR_FRAME_TYPE_NYT_X = 17, // X frame, no differential torque for yaw
         MOTOR_FRAME_TYPE_BF_X_REV = 18, // X frame, betaflight ordering, reversed motors
+        MOTOR_FRAME_TYPE_CA02 = 19, // GA CA02 frame
+        MOTOR_FRAME_TYPE_CA04 = 20 // GA CA04 (corrected) frame
     };
 
     // return string corresponding to frame_type
