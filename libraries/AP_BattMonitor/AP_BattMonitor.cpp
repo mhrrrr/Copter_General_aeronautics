@@ -14,6 +14,7 @@
 #include "AP_BattMonitor_FuelLevel_PWM.h"
 #include "AP_BattMonitor_Generator.h"
 #include "AP_BattMonitor_MPPT_PacketDigital.h"
+#include "AP_BattMonitor_GA_MAVlink.h"
 
 #include <AP_HAL/AP_HAL.h>
 
@@ -118,6 +119,9 @@ AP_BattMonitor::init()
             case Type::ANALOG_VOLTAGE_ONLY:
             case Type::ANALOG_VOLTAGE_AND_CURRENT:
                 drivers[instance] = new AP_BattMonitor_Analog(*this, state[instance], _params[instance]);
+                break;
+            case Type::GA_MAVLink:
+                drivers[instance] = new AP_BattMonitor_GA_MAVlink(*this, state[instance], _params[instance]);
                 break;
 #if HAL_BATTMON_SMBUS_ENABLE
             case Type::SOLO:
@@ -586,6 +590,15 @@ bool AP_BattMonitor::reset_remaining_mask(uint16_t battery_mask, float percentag
         AP_Notify::flags.failsafe_battery = false;
     }
     return ret;
+}
+
+// handle mavlink GA_MAVLINK messages
+void AP_BattMonitor::handle_ga_mavlink_msg(int voltage, int current, int mah) {
+    for (uint8_t i = 0; i < _num_instances; i++) {
+        if(get_type(i)==Type::GA_MAVLink){
+            drivers[i]->handle_ga_mavlink_msg(voltage, current, mah);
+        }
+    }
 }
 
 // Returns the mavlink charge state. The following mavlink charge states are not used

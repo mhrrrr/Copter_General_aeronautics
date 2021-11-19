@@ -3542,6 +3542,10 @@ void GCS_MAVLINK::handle_common_message(const mavlink_message_t &msg)
     case MAVLINK_MSG_ID_NPNT_STATUS: // NPNT
     	handle_npnt_status_message(msg);
     	break;
+
+    case MAVLINK_MSG_ID_GA_MAV_BATT_STATUS: // GA Battery Status
+    	handle_ga_mavlink_battery_status_message(msg);
+    	break;
     }
 }
 
@@ -3553,6 +3557,15 @@ void GCS_MAVLINK::handle_npnt_status_message(const mavlink_message_t &msg)
 
     AP_Arming::npnt_allowed = bool(packet.arming_allowed);
     memcpy(&AP_Arming::npnt_reason, packet.reason, MAVLINK_MSG_NPNT_STATUS_FIELD_REASON_LEN);
+}
+
+// GA Battery Status
+void GCS_MAVLINK::handle_ga_mavlink_battery_status_message(const mavlink_message_t &msg){
+    mavlink_ga_mav_batt_status_t packet;
+    mavlink_msg_ga_mav_batt_status_decode(&msg, &packet);
+
+    AP_BattMonitor *battMonitor = AP_BattMonitor::get_singleton();
+    battMonitor->handle_ga_mavlink_msg(packet.voltage, packet.current, packet.consumed_mah);
 }
 
 void GCS_MAVLINK::handle_common_mission_message(const mavlink_message_t &msg)

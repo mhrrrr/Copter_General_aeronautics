@@ -91,6 +91,7 @@ public:
         GENERATOR_FUEL             = 18,
         Rotoye                     = 19,
         MPPT_PacketDigital         = 20,
+        GA_MAVLink                 = 21,
     };
 
     FUNCTOR_TYPEDEF(battery_failsafe_handler_fn_t, void, const char *, const int8_t);
@@ -220,6 +221,9 @@ public:
 
     // Returns mavlink charge state
     MAV_BATTERY_CHARGE_STATE get_mavlink_charge_state(const uint8_t instance) const;
+
+    // handle mavlink GA_MAVLINK messages
+    void handle_ga_mavlink_msg(int voltage, int current, int mah);
 
     static const struct AP_Param::GroupInfo var_info[];
 
