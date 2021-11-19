@@ -216,6 +216,13 @@ bool AP_GPS_NMEA::_have_new_message()
         state.have_gps_yaw = false;
     }
 
+    if (_last_VEL_ms != 0 &&
+        now - _last_VEL_ms > 300) {
+        // waiting for VEL
+        _have_gps_vel = false;
+        return false;
+    }
+
     _last_GGA_ms = 1;
     _last_RMC_ms = 1;
     return true;
@@ -248,7 +255,9 @@ bool AP_GPS_NMEA::_term_complete()
                     make_gps_time(_new_date, _new_time * 10);
                     set_uart_timestamp(_sentence_length);
                     state.last_gps_time_ms = now;
-                    fill_3d_velocity();
+                    if (!_have_gps_vel) {
+                        fill_3d_velocity();
+                    }
                     break;
                 case _GPS_SENTENCE_GGA:
                     _last_GGA_ms = now;
@@ -288,7 +297,9 @@ bool AP_GPS_NMEA::_term_complete()
                     _last_VTG_ms = now;
                     state.ground_speed  = _new_speed*0.01f;
                     state.ground_course = wrap_360(_new_course*0.01f);
-                    fill_3d_velocity();
+                    if (!_have_gps_vel) {
+                        fill_3d_velocity();
+                    }
                     // VTG has no fix indicator, can't change fix status
                     break;
                 case _GPS_SENTENCE_HDT:
@@ -309,6 +320,16 @@ bool AP_GPS_NMEA::_term_complete()
                     // HDT sentence.
                     state.gps_yaw_configured = true;
                     
+                    break;
+
+                case _GPS_SENTENCE_VEL:
+                    if(_have_gps_vel){
+                        state.velocity.x = _vel_x*0.01f;
+                        state.velocity.y = _vel_y*0.01f;
+                        state.velocity.z = _vel_z*0.01f;
+                        state.have_vertical_velocity = true;
+                        _last_VEL_ms = now;
+                    }
                     break;
                 }
             } else {
@@ -353,6 +374,9 @@ bool AP_GPS_NMEA::_term_complete()
             // VTG may not contain a data qualifier, presume the solution is good
             // unless it tells us otherwise.
             _gps_data_good = true;
+        }  else if (strcmp(term_type, "SHR") == 0) {
+            _gps_data_good = true;
+            _sentence_type = _GPS_SENTENCE_VEL;
         } else {
             _sentence_type = _GPS_SENTENCE_OTHER;
         }
@@ -432,6 +456,19 @@ bool AP_GPS_NMEA::_term_complete()
         case _GPS_SENTENCE_RMC + 8: // Course (GPRMC)
         case _GPS_SENTENCE_VTG + 1: // Course (VTG)
             _new_course = _parse_decimal_100(_term);
+            break;
+
+        case _GPS_SENTENCE_VEL + 4: // Easting Velocity
+            _have_gps_vel = sizeof(_term) > 0 ? true : false;
+            _vel_y = _parse_decimal_100(_term);
+            break;
+        case _GPS_SENTENCE_VEL + 5: // Northin Velocity
+            _have_gps_vel = sizeof(_term) > 0 ? true : false;
+            _vel_x = _parse_decimal_100(_term);
+            break;
+        case _GPS_SENTENCE_VEL + 6: // Up Velocity
+            _have_gps_vel = sizeof(_term) > 0 ? true : false;
+            _vel_z = -1*_parse_decimal_100(_term);
             break;
         }
     }

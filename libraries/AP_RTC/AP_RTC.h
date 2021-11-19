@@ -3,7 +3,6 @@
 #include <AP_Param/AP_Param.h>
 
 #include <stdint.h>
-#include <time.h>
 
 class AP_RTC {
 
@@ -44,9 +43,6 @@ public:
     bool get_local_time(uint8_t &hour, uint8_t &min, uint8_t &sec, uint16_t &ms);
 
     uint32_t get_time_utc(int32_t hour, int32_t min, int32_t sec, int32_t ms);
-
-    // replacement for mktime()
-    static time_t mktime(const struct tm *t);
 
     // get singleton instance
     static AP_RTC *get_singleton() {

@@ -72,6 +72,7 @@ private:
         _GPS_SENTENCE_GGA = 64,
         _GPS_SENTENCE_VTG = 96,
         _GPS_SENTENCE_HDT = 128,
+        _GPS_SENTENCE_VEL = 160,
         _GPS_SENTENCE_OTHER = 0
     };
 
@@ -122,6 +123,7 @@ private:
     uint8_t _term_offset;                                       ///< character offset with the term being received
     uint16_t _sentence_length;
     bool _gps_data_good;                                        ///< set when the sentence indicates data is good
+    bool _have_gps_vel=false;
 
     // The result of parsing terms within a message is stored temporarily until
     // the message is completely processed and the checksum validated.
@@ -132,6 +134,9 @@ private:
     int32_t _new_longitude;                                     ///< longitude parsed from a term
     int32_t _new_altitude;                                      ///< altitude parsed from a term
     int32_t _new_speed;                                                 ///< speed parsed from a term
+    int32_t _vel_x;
+    int32_t _vel_y;
+    int32_t _vel_z;
     int32_t _new_course;                                        ///< course parsed from a term
     float   _new_gps_yaw=-1;                                        ///< yaw parsed from a term
     uint16_t _new_hdop;                                                 ///< HDOP parsed from a term
@@ -142,6 +147,7 @@ private:
     uint32_t _last_GGA_ms = 0;
     uint32_t _last_VTG_ms = 0;
     uint32_t _last_HDT_ms = 0;
+    uint32_t _last_VEL_ms = 0;
 
     /// @name	Init strings
     ///			In ::init, an attempt is made to configure the GPS
