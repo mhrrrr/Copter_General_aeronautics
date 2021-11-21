@@ -324,9 +324,9 @@ bool AP_GPS_NMEA::_term_complete()
 
                 case _GPS_SENTENCE_VEL:
                     if(_have_gps_vel){
-                        state.velocity.x = _vel_x*0.01f;
-                        state.velocity.y = _vel_y*0.01f;
-                        state.velocity.z = _vel_z*0.01f;
+                        state.velocity.x = _vel_x;
+                        state.velocity.y = _vel_y;
+                        state.velocity.z = _vel_z;
                         state.have_vertical_velocity = true;
                         _last_VEL_ms = now;
                     }
@@ -460,15 +460,20 @@ bool AP_GPS_NMEA::_term_complete()
 
         case _GPS_SENTENCE_VEL + 4: // Easting Velocity
             _have_gps_vel = sizeof(_term) > 0 ? true : false;
-            _vel_y = _parse_decimal_100(_term);
+            if(_have_gps_vel){
+                _vel_y = atof(_term);
+            }
             break;
         case _GPS_SENTENCE_VEL + 5: // Northin Velocity
             _have_gps_vel = sizeof(_term) > 0 ? true : false;
-            _vel_x = _parse_decimal_100(_term);
-            break;
+            if(_have_gps_vel){
+                _vel_x = atof(_term);
+            }
         case _GPS_SENTENCE_VEL + 6: // Up Velocity
             _have_gps_vel = sizeof(_term) > 0 ? true : false;
-            _vel_z = -1*_parse_decimal_100(_term);
+            if(_have_gps_vel){
+                _vel_z = -1*atof(_term);
+            }
             break;
         }
     }

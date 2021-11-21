@@ -134,9 +134,9 @@ private:
     int32_t _new_longitude;                                     ///< longitude parsed from a term
     int32_t _new_altitude;                                      ///< altitude parsed from a term
     int32_t _new_speed;                                                 ///< speed parsed from a term
-    int32_t _vel_x;
-    int32_t _vel_y;
-    int32_t _vel_z;
+    double _vel_x;
+    double _vel_y;
+    double _vel_z;
     int32_t _new_course;                                        ///< course parsed from a term
     float   _new_gps_yaw=-1;                                        ///< yaw parsed from a term
     uint16_t _new_hdop;                                                 ///< HDOP parsed from a term
