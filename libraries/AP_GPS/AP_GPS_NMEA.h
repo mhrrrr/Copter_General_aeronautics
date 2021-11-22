@@ -74,6 +74,7 @@ private:
         _GPS_SENTENCE_HDT = 128,
         _GPS_SENTENCE_PHD = 138, // extension for AllyStar GPS modules
         _GPS_SENTENCE_THS = 160, // True heading with quality indicator, available on Trimble MB-Two
+        _GPS_SENTENCE_VEL = 200, // VEL Message from Trimble MB Two
         _GPS_SENTENCE_OTHER = 0
     };
 
@@ -125,6 +126,7 @@ private:
     uint16_t _sentence_length;
     bool _gps_data_good;                                        ///< set when the sentence indicates data is good
     bool _sentence_done;                                        ///< set when a sentence has been fully decoded
+    bool _have_gps_vel = false;
 
     // The result of parsing terms within a message is stored temporarily until
     // the message is completely processed and the checksum validated.
@@ -137,6 +139,9 @@ private:
     int32_t _new_speed;                                                 ///< speed parsed from a term
     int32_t _new_course;                                        ///< course parsed from a term
     float   _new_gps_yaw;                                        ///< yaw parsed from a term
+    double _vel_x;
+    double _vel_y;
+    double _vel_z;
     uint16_t _new_hdop;                                                 ///< HDOP parsed from a term
     uint8_t _new_satellite_count;                       ///< satellite count parsed from a term
     uint8_t _new_quality_indicator;                                     ///< GPS quality indicator parsed from a term
@@ -148,6 +153,7 @@ private:
     uint32_t _last_PHD_12_ms;
     uint32_t _last_PHD_26_ms;
     uint32_t _last_fix_ms;
+    uint32_t _last_VEL_ms = 0;
 
     /// @name	Init strings
     ///			In ::init, an attempt is made to configure the GPS

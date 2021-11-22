@@ -218,7 +218,7 @@ bool AP_GPS_NMEA::_have_new_message()
       is important as the have_vertical_velocity field will be
       overwritten by fill_3d_velocity()
      */
-    if (_last_PHD_12_ms != 0 &&
+ /* if (_last_PHD_12_ms != 0 &&
         now - _last_PHD_12_ms > 150 &&
         now - _last_PHD_12_ms < 1000) {
         // waiting on PHD_12
@@ -229,7 +229,7 @@ bool AP_GPS_NMEA::_have_new_message()
         now - _last_PHD_26_ms < 1000) {
         // waiting on PHD_26
         return false;
-    }
+    } */
 
     // prevent these messages being used again
     if (_last_VTG_ms != 0) {
@@ -241,14 +241,22 @@ bool AP_GPS_NMEA::_have_new_message()
         state.have_gps_yaw = false;
     }
 
+    // handling VEL Message from Trimble MB Two
+    if (_last_VEL_ms != 0 &&
+        now - _last_VEL_ms > 300) {
+        // waiting for VEL
+        _have_gps_vel = false;
+        return false;
+    }
+
     // special case for fixing low output rate of ALLYSTAR GPS modules
-    const int32_t dt_ms = now - _last_fix_ms;
+ /* const int32_t dt_ms = now - _last_fix_ms;
     if (labs(dt_ms - gps._rate_ms[state.instance]) > 50 &&
         get_type() == AP_GPS::GPS_TYPE_ALLYSTAR) {
         nmea_printf(port, "$PHD,06,42,UUUUTTTT,BB,0,%u,55,0,%u,0,0,0",
                     1000U/gps._rate_ms[state.instance],
                     gps._rate_ms[state.instance]);
-    }
+    } */
 
     _last_fix_ms = now;
 
@@ -285,8 +293,7 @@ bool AP_GPS_NMEA::_term_complete()
                     make_gps_time(_new_date, _new_time * 10);
                     set_uart_timestamp(_sentence_length);
                     state.last_gps_time_ms = now;
-                    if (_last_PHD_12_ms == 0 ||
-                        now - _last_PHD_12_ms > 1000) {
+                    if (!_have_gps_vel) {
                         fill_3d_velocity();
                     }
                     break;
@@ -328,8 +335,7 @@ bool AP_GPS_NMEA::_term_complete()
                     _last_VTG_ms = now;
                     state.ground_speed  = _new_speed*0.01f;
                     state.ground_course = wrap_360(_new_course*0.01f);
-                    if (_last_PHD_12_ms == 0 ||
-                        now - _last_PHD_12_ms > 1000) {
+                    if (!_have_gps_vel) {
                         fill_3d_velocity();
                     }
                     // VTG has no fix indicator, can't change fix status
@@ -346,7 +352,16 @@ bool AP_GPS_NMEA::_term_complete()
                     // HDT sentence.
                     state.gps_yaw_configured = true;
                     break;
-                case _GPS_SENTENCE_PHD:
+                case _GPS_SENTENCE_VEL:
+                    if(_have_gps_vel){
+                        state.velocity.x = _vel_x;
+                        state.velocity.y = _vel_y;
+                        state.velocity.z = _vel_z;
+                        state.have_vertical_velocity = true;
+                        _last_VEL_ms = now;
+                    }
+                    break;
+             /* case _GPS_SENTENCE_PHD:
                     if (_phd.msg_id == 12) {
                         state.velocity.x = _phd.fields[0] * 0.01;
                         state.velocity.y = _phd.fields[1] * 0.01;
@@ -361,7 +376,7 @@ bool AP_GPS_NMEA::_term_complete()
                         state.speed_accuracy = MAX(_phd.fields[3],_phd.fields[4]) * 0.001;
                         state.have_speed_accuracy = true;
                         _last_PHD_26_ms = now;
-                    }
+                    } */
                 }
             } else {
                 switch (_sentence_type) {
@@ -388,10 +403,10 @@ bool AP_GPS_NMEA::_term_complete()
         /*
           special case for $PHD message
          */
-        if (strcmp(_term, "PHD") == 0) {
+     /* if (strcmp(_term, "PHD") == 0) {
             _sentence_type = _GPS_SENTENCE_PHD;
             return false;
-        }
+        } */
         /*
           The first two letters of the NMEA term are the talker
           ID. The most common is 'GP' but there are a bunch of others
@@ -418,6 +433,9 @@ bool AP_GPS_NMEA::_term_complete()
             // VTG may not contain a data qualifier, presume the solution is good
             // unless it tells us otherwise.
             _gps_data_good = true;
+        } else if (strcmp(term_type, "SHR") == 0) {
+            _gps_data_good = true;
+            _sentence_type = _GPS_SENTENCE_VEL;
         } else {
             _sentence_type = _GPS_SENTENCE_OTHER;
         }
@@ -500,7 +518,26 @@ bool AP_GPS_NMEA::_term_complete()
             _new_course = _parse_decimal_100(_term);
             break;
 
-        case _GPS_SENTENCE_PHD + 1: // PHD class
+        case _GPS_SENTENCE_VEL + 4: // Easting Velocity
+            _have_gps_vel = sizeof(_term) > 0 ? true : false;
+            if(_have_gps_vel){
+                _vel_y = atof(_term);
+            }
+            break;
+        case _GPS_SENTENCE_VEL + 5: // Northin Velocity
+            _have_gps_vel = sizeof(_term) > 0 ? true : false;
+            if(_have_gps_vel){
+                _vel_x = atof(_term);
+            }
+            break;
+        case _GPS_SENTENCE_VEL + 6: // Up Velocity
+            _have_gps_vel = sizeof(_term) > 0 ? true : false;
+            if(_have_gps_vel){
+                _vel_z = -1*atof(_term);
+            }
+            break;
+
+     /* case _GPS_SENTENCE_PHD + 1: // PHD class
             _phd.msg_class = atol(_term);
             break;
         case _GPS_SENTENCE_PHD + 2: // PHD message
@@ -515,7 +552,7 @@ bool AP_GPS_NMEA::_term_complete()
             break;
         case _GPS_SENTENCE_PHD + 6 ... _GPS_SENTENCE_PHD + 11: // PHD message, fields
             _phd.fields[_term_number-6] = atol(_term);
-            break;
+            break; */
         }
     }
 
