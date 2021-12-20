@@ -18,4 +18,4 @@
 	url = https://github.com/ArduPilot/libcanard.git
 [submodule "modules/mavlink"]
 	path = modules/mavlink
-	url = https://aravindvgn@bitbucket.org/generalaeronautics/mavlink_ga.git
+	url = https://bitbucket.org/generalaeronautics/mavlink_ga.git
