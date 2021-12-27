@@ -1,0 +1,112 @@
+# This is a basic pipeline setup to build GA version of APCopter
+# --------------------------------------------------------------------------------------------------------------------
+
+# Triggers: Either manually or whenever a git tag starting with "ga_copter" is pushed to this branch
+# The build files for all the boards get archived as zip in "Downloads" section of the Copter_GA repository
+
+# These build files (.bin & .apj) are also available as artifacts (i.e. saved as temporary files, in case of error)
+# This pipeline can be extended to deploy these .bin/.apj files 
+
+
+image: ubuntu
+
+definitions: 
+  steps:
+    - step: &APCopterbuild
+        name: 'Building Ardupilot copter'
+        script:
+          - echo "Setting up release name..."
+          - export RELEASE_NAME=""
+          - if [[ ! -z $BITBUCKET_TAG && -z $RELEASE_NAME ]]; then export RELEASE_NAME=$BITBUCKET_TAG; fi
+          - if [[ ! -z $BITBUCKET_BRANCH && -z $RELEASE_NAME ]]; then export RELEASE_NAME=${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\); fi
+          - if [[ ! -z $BITBUCKET_COMMIT && -z $RELEASE_NAME ]]; then export RELEASE_NAME=$BITBUCKET_COMMIT; fi
+          - echo "Build release name = $RELEASE_NAME"
+          - echo "Updating package repositories and installing packages..."
+          - apt update -y
+          - DEBIAN_FRONTEND=noninteractive apt install -y tzdata git python3 sed python3-pip build-essential python3-future libtool autoconf pkg-config systemd gcc-arm-none-eabi p7zip-rar
+          - echo "Updating submodules..."
+          - sed -i "s/url = https:\/\/bitbucket.org\/generalaeronautics\/mavlink_ga.git/url = https:\/\/$BITBUCKET_USERNAME:$BITBUCKET_APP_PASSWORD@bitbucket.org\/generalaeronautics\/mavlink_ga.git/g" .gitmodules
+          - git submodule update --init --recursive
+          - echo "Editing python to python3 in waf & waf-light"
+          - sed -i 's/python/python3/g' waf
+          - sed -i 's/python/python3/g' modules/waf/waf-light
+          - echo "Building Ardupilot release $RELEASE_NAME for CubeBlack"
+          - python3 ./waf configure --board CubeBlack
+          - python3 ./waf copter
+          - mkdir -p Ardupilot_$RELEASE_NAME/CubeBlack
+          - cp -R build/CubeBlack/bin/* Ardupilot_$RELEASE_NAME/CubeBlack
+          - echo "Building Ardupilot release $RELEASE_NAME for CubeOrange"
+          - python3 ./waf configure --board CubeOrange
+          - python3 ./waf copter
+          - mkdir -p Ardupilot_$RELEASE_NAME/CubeOrange
+          - cp -R build/CubeOrange/bin/* Ardupilot_$RELEASE_NAME/CubeOrange
+          - echo "Building Ardupilot release $RELEASE_NAME for Pixhawk4"
+          - python3 ./waf configure --board Pixhawk4
+          - python3 ./waf copter
+          - mkdir -p Ardupilot_$RELEASE_NAME/Pixhawk4
+          - cp -R build/Pixhawk4/bin/* Ardupilot_$RELEASE_NAME/Pixhawk4
+          - echo "Adding Release notes & extra info..."
+          - cat ArduCopter/ReleaseNotes_GA.txt >> Ardupilot_$RELEASE_NAME/ReleaseNotes.txt
+          - echo -e "\n\n\n\n\n\nArdupilot-Copter original repository [Release Note] goes here >>\n" >> Ardupilot_$RELEASE_NAME/ReleaseNotes.txt
+          - cat ArduCopter/ReleaseNotes.txt >> Ardupilot_$RELEASE_NAME/ReleaseNotes.txt
+          - echo "Current-build info " >> Ardupilot_$RELEASE_NAME/build_info.txt
+          - echo "-------------------" >> Ardupilot_$RELEASE_NAME/build_info.txt
+          - echo "@ URL            = $BITBUCKET_GIT_HTTP_ORIGIN" >> Ardupilot_$RELEASE_NAME/build_info.txt
+          - echo "@ Commit hash    = $BITBUCKET_COMMIT" >> Ardupilot_$RELEASE_NAME/build_info.txt
+          - echo "@ Branch         = $BITBUCKET_BRANCH" >> Ardupilot_$RELEASE_NAME/build_info.txt
+          - echo "@ Tag            = $BITBUCKET_TAG" >> Ardupilot_$RELEASE_NAME/build_info.txt
+          - echo "Copying/archiving the build files..."
+          - 7z a Ardupilot_$RELEASE_NAME.zip Ardupilot_$RELEASE_NAME
+          - echo "Moving release folder contents to artifacts folder"
+          - mkdir arti
+          - mv Ardupilot_$RELEASE_NAME arti
+          - echo "Uploading to Bitbucket downloads..."
+          - pipe: atlassian/bitbucket-upload-file:0.3.2
+            variables:
+              BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+              BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+              FILENAME: "Ardupilot_$RELEASE_NAME.zip"
+        artifacts:
+            - arti/**
+
+
+
+pipelines:
+ tags:
+    ga_copter*: #AP copter build pipeline (when a new tag starting with "ga_copter" is pushed)
+      - step:
+          <<: *APCopterbuild
+          name: "Building GA''s APcopter from tag: $BITBUCKET_TAG"
+      
+ custom:
+   buildAPcopter: #AP copter build pipeline (manual)
+      - step: 
+          <<: *APCopterbuild
+          name: "Building GA''s APcopter from branch: $BITBUCKET_BRANCH"
+          
+   uploadTest: #Testing upload to Bitbucket repo (manual)
+      - step:
+          name: 'Testing Bitbucket upload'
+          script:
+            - echo "Updating package repositories and installing packages..."
+            - apt update -y
+            - DEBIAN_FRONTEND=noninteractive apt install -y tzdata p7zip-rar
+            - echo "This is for testing uploads in bitbucket repo..." >> tsttext.txt
+            - mkdir -p Ardupilot_$BITBUCKET_BRANCH/test
+            - cp tsttext.txt Ardupilot_$BITBUCKET_BRANCH/test
+            - echo "test"
+            - echo -e "\n\n\nArdupilot-Copter original repository Release Note goes here >>\n" >> Ardupilot_$BITBUCKET_BRANCH/ReleaseNotes.txt
+            - cat ArduCopter/ReleaseNotes.txt >> Ardupilot_$BITBUCKET_BRANCH/ReleaseNotes.txt
+            - echo "Copying/archiving the files..."
+            - 7z a Ardupilot_${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\)_UpldTst.zip Ardupilot_$BITBUCKET_BRANCH
+            - echo "Moving release folder contents to artifacts folder"
+            - mkdir arti
+            - mv Ardupilot_$BITBUCKET_BRANCH arti
+            - echo "Uploading to Bitbucket downloads..."  
+            - pipe: atlassian/bitbucket-upload-file:0.3.2
+              variables:
+                BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+                FILENAME: "Ardupilot_${BITBUCKET_BRANCH}_(${BITBUCKET_COMMIT:0:8})_UpldTst.zip"
+          artifacts:
+            - arti/**
