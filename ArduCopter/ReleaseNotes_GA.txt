@@ -1,0 +1,42 @@
+Title:		Release notes for FCS Release of 4.1.1
+Created By:	Aravind Vigneshwar
+
+============================================================================================================
+
+This FCS build is based on the ArduCopter 4.1.1 release. Release notes for the same can be found here. 
+This document includes highlights of custom changes done over and above 4.1.1 for specific GA functionality.
+
+============================================================================================================
+
+
+
+
+GA Copter 4.1.1 v1 (baseline)
+------------------------------------------------------------------------------------------------------------
+Functionality:
+1. NPNT arming check added to prevent arming without NPNT.
+	Bit number 20 is NPNT check. Setting bit number 20 to 0 will disable NPNT checks and setting it 
+	to 1 will enable NPNT checks. 
+	(For internal use, user can override the check with changing ARMING_CHECK parameter.)
+2. Handling VEL message from Trimble MB Two
+3. MAVLink based Battery monitoring added to support CAN battery through IMX. 
+	The parameter setting is 
+	BATT_MONITOR = 21
+		Note: Although this parameter’s option in Mission Planner mentions “21:INA2XX”, the code 
+		corresponding to that is not available in this firmware version.
+4. Following MAVLink messages added (in the MAVLink submodule currently linked to GA’s MAVLink repo):
+	a. Message ID = 5000; Name = GA3A_PAYLOAD_STATUS
+	b. Message ID = 5001; Name = GA3A_MISSION_CMD
+	c. Message ID = 5002; Name = GA3A_RESUME_CMD
+	d. Message ID = 6000; Name = NPNT_STATUS
+	e. Message ID = 6001; Name = NPNT_REQ_LOGS
+	f. Message ID = 6002; Name = NPNT_UIN_REGISTER
+	g. Message ID = 6003; Name = NPNT_KEY_ROTATION
+	h. Message ID = 6004; Name = NPNT_RFM_DETAIL
+	i. Message ID = 6005; Name = NPNT_GEOFENCE
+	j. Message ID = 7000; Name = GA_MAV_BATT_STATUS
+
+Controls:
+1. New frame types added: CA02 airframe and CA04-001 (CG Corrected) airframe
+	a. CA02: FRAME_TYPE = 19
+	b. CA04: FRAME_TYPE = 20
