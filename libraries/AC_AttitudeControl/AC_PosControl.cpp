@@ -455,8 +455,33 @@ void AC_PosControl::init_xy_controller()
 
     // set resultant acceleration to current attitude target
     Vector3f accel_target;
-    lean_angles_to_accel_xy(accel_target.x, accel_target.y);
-    _pid_vel_xy.set_integrator(accel_target - _accel_desired);
+    lean_angles_to_accel_xy(accel_target.x, accel_target.y);    
+    /*
+    The orignal ArduCopter initialisation was based on the target acceleration and desired acceleration
+        -> _pid_vel_xy.set_integrator(accel_target - _accel_desired);
+    Due to incorrect initialisation in some cases, we are initialising with accel_target
+    This initialisation is almost close to zero.
+    */
+    
+    //Constraining the target acceleration to keep it under 2 m/s2
+    accel_target.x = constrain_float(accel_target.x, -2.0,2.0);
+    accel_target.y = constrain_float(accel_target.y, -2.0,2.0);
+    //Setting the integrator to the target acceleration
+    _pid_vel_xy.set_integrator(accel_target);
+
+    //Logging the values under INIT string
+    AP::logger().Write("INIT", "TimeUS,I_x,I_y,TAE_X,TAE_Y,DES_X,DES_Y,TAR,TAP", "Qffffffff",
+                                        AP_HAL::micros64(),
+                                        (double)(accel_target.x - _accel_desired.x),
+                                        (double)(accel_target.y - _accel_desired.y),
+                                        (double)accel_target.x,
+                                        (double)accel_target.y,
+                                        (double)_accel_desired.x,
+                                        (double)_accel_desired.y,
+                                        (double)_attitude_control.get_att_target_euler_rad().x*180/3.14, 
+                                        (double)_attitude_control.get_att_target_euler_rad().y*180/3.14
+                                        );
+
 }
 
 /// init_xy_controller_stopping_point - initialise the position controller to the stopping point with zero velocity and acceleration.
