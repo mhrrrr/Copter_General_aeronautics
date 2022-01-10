@@ -795,6 +795,8 @@ void AC_PosControl::relax_z_controller(float throttle_setting)
     // Set accel PID I term based on the requested throttle
     float throttle = _attitude_control.get_throttle_in();
     throttle_setting = throttle + (throttle_setting - throttle) * (_dt / (_dt + POSCONTROL_RELAX_TC));
+    //Reset the throttle_setting to zero. ..Uncomment to revert
+    throttle_setting = 0;
     _pid_accel_z.set_integrator((throttle_setting - _motors.get_throttle_hover()) * 1000.0f);
 }
 
