@@ -795,6 +795,28 @@ void AC_PosControl::relax_z_controller(float throttle_setting)
     // Set accel PID I term based on the requested throttle
     float throttle = _attitude_control.get_throttle_in();
     throttle_setting = throttle + (throttle_setting - throttle) * (_dt / (_dt + POSCONTROL_RELAX_TC));
+/*
+    Logging the values under IALT string before code modification to catch the calculated values
+
+    Log description as follows:
+    *thI -> Output of PIDA + ThO
+    *thS -> throttle_Setting
+    *I_p -> Previous Integral value; I_n -> New integral value
+    *P_tar and V_tar are position and velocity targets, current and desired variable (all are same)
+    *TAR and TAP are target attitudes to see what attitudes are calculated in pre takeoff mode.
+*/
+    AP::logger().Write("IALT", "TimeUS,thI,thS,I_p,I_n,P_tar,V_tar,TAR,TAP", "Qffffffff",
+                                        AP_HAL::micros64(),
+                                        (double)(throttle),
+                                        (double)(throttle_setting),
+                                        (double)(throttle_setting - _motors.get_throttle_hover()),
+                                        (double)(- _motors.get_throttle_hover()),
+                                        (double)_pos_target.z,
+                                        (double)_vel_desired.z,
+                                        (double)_attitude_control.get_att_target_euler_rad().x*180/3.14, 
+                                        (double)_attitude_control.get_att_target_euler_rad().y*180/3.14
+                                        );
+
     //Reset the throttle_setting to zero. ..Uncomment to revert
     throttle_setting = 0;
     _pid_accel_z.set_integrator((throttle_setting - _motors.get_throttle_hover()) * 1000.0f);
