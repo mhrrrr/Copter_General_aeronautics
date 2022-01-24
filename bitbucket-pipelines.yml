@@ -13,7 +13,7 @@ image: ubuntu
 definitions: 
   steps:
     - step: &APCopterbuild
-        name: 'Building Ardupilot copter'
+        name: 'Building ArduCopter'
         script:
           - echo "Setting up release name..."
           - export RELEASE_NAME=""
@@ -68,23 +68,41 @@ definitions:
               FILENAME: "Ardupilot_$RELEASE_NAME.zip"
         artifacts:
             - arti/**
+    - step: &DeployBuildToAWSS3
+        name: 'Deploy the ArduCopter build to AWS S3'
+        deployment: Production
+        script:
+          - echo "Deploy the ArduCopter build to AWS S3..."
+          - pipe: atlassian/aws-s3-deploy:0.3.7
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'ap-south-1'
+              S3_BUCKET: 'ardupilot-pipeline-test'
+              LOCAL_PATH: 'arti'
 
 
 
 pipelines:
  tags:
     ga_copter*: #AP copter build pipeline (when a new tag starting with "ga_copter" is pushed)
-      - step:
-          <<: *APCopterbuild
-          name: "Building GA''s APcopter from tag: $BITBUCKET_TAG"
-      
- custom:
-   buildAPcopter: #AP copter build pipeline (manual)
       - step: 
           <<: *APCopterbuild
-          name: "Building GA''s APcopter from branch: $BITBUCKET_BRANCH"
+          name: "Building GA's APcopter from tag"
+      - step: *DeployBuildToAWSS3
+      
+ custom:
+   BuildAPcopter: #AP copter build pipeline (manual)
+      - step: 
+          <<: *APCopterbuild
+          name: "Building GA's APcopter from branch"
+   BuildAndDeployAPcopterToAWSS3: #AP copter build & deplot to AWS S3 pipeline (manual)
+      - step: 
+          <<: *APCopterbuild
+          name: "Building GA's APcopter from branch"
+      - step: *DeployBuildToAWSS3
           
-   uploadTest: #Testing upload to Bitbucket repo (manual)
+   BitbucketUploadTest: #Testing upload to Bitbucket repo (manual)
       - step:
           name: 'Testing Bitbucket upload'
           script:
