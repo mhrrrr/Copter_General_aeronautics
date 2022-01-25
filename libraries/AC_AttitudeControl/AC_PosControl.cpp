@@ -468,20 +468,6 @@ void AC_PosControl::init_xy_controller()
     accel_target.y = constrain_float(accel_target.y, -2.0,2.0);
     //Setting the integrator to the target acceleration
     _pid_vel_xy.set_integrator(accel_target);
-
-    //Logging the values under INIT string
-    AP::logger().Write("INIT", "TimeUS,I_x,I_y,TAE_X,TAE_Y,DES_X,DES_Y,TAR,TAP", "Qffffffff",
-                                        AP_HAL::micros64(),
-                                        (double)(accel_target.x - _accel_desired.x),
-                                        (double)(accel_target.y - _accel_desired.y),
-                                        (double)accel_target.x,
-                                        (double)accel_target.y,
-                                        (double)_accel_desired.x,
-                                        (double)_accel_desired.y,
-                                        (double)_attitude_control.get_att_target_euler_rad().x*180/3.14, 
-                                        (double)_attitude_control.get_att_target_euler_rad().y*180/3.14
-                                        );
-
 }
 
 /// init_xy_controller_stopping_point - initialise the position controller to the stopping point with zero velocity and acceleration.
@@ -805,17 +791,6 @@ void AC_PosControl::relax_z_controller(float throttle_setting)
     *P_tar and V_tar are position and velocity targets, current and desired variable (all are same)
     *TAR and TAP are target attitudes to see what attitudes are calculated in pre takeoff mode.
 */
-    AP::logger().Write("IALT", "TimeUS,thI,thS,I_p,I_n,P_tar,V_tar,TAR,TAP", "Qffffffff",
-                                        AP_HAL::micros64(),
-                                        (double)(throttle),
-                                        (double)(throttle_setting),
-                                        (double)(throttle_setting - _motors.get_throttle_hover()),
-                                        (double)(- _motors.get_throttle_hover()),
-                                        (double)_pos_target.z,
-                                        (double)_vel_desired.z,
-                                        (double)_attitude_control.get_att_target_euler_rad().x*180/3.14, 
-                                        (double)_attitude_control.get_att_target_euler_rad().y*180/3.14
-                                        );
 
     //Reset the throttle_setting to zero. ..Uncomment to revert
     throttle_setting = 0;

@@ -1,5 +1,5 @@
 Title:		Release notes for FCS Release of 4.1.1
-Created By:	Aravind Vigneshwar
+Created By:	Aravind Vigneshwar, Dhruv, Sachchit
 
 ============================================================================================================
 
@@ -9,6 +9,12 @@ This document includes highlights of custom changes done over and above 4.1.1 fo
 ============================================================================================================
 
 
+GA Copter 4.1.1 v2
+------------------------------------------------------------------------------------------------------------
+Controls:
+1. Modified Loiter mode integrator initialization to fix its incorrect initialization in some cases that was
+	causing overshoots in angle when taking off.
+2. Resetting throttle_setting to fix AltHold mode initialization, which was causing overshoots when taking off.
 
 
 GA Copter 4.1.1 v1 (baseline)
