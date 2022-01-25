@@ -11,6 +11,9 @@ This document includes highlights of custom changes done over and above 4.1.1 fo
 
 GA Copter 4.1.1 v2
 ------------------------------------------------------------------------------------------------------------
+Functionality:
+1. Added versioning of GA builds
+
 Controls:
 1. Modified Loiter mode integrator initialization to fix its incorrect initialization in some cases that was
 	causing overshoots in angle when taking off.
