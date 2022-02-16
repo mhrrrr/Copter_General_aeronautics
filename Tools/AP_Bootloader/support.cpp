@@ -428,6 +428,14 @@ void *memset(void *s, int c, size_t n)
     return s;
 }
 
+bool setCRC(uint32_t address, uint32_t* shaCRC)
+{
+    //stm32_flash_keep_unlocked(true);
+	//return stm32_flash_write(uint32_t(address), shaCRC, 68);
+    //return stm32_flash_write(uint32_t(address), shaCRC, 64); working but not all
+    return stm32_flash_write(uint32_t(address), shaCRC, 256);
+}
+
 #if defined(BOOTLOADER_DEV_LIST)
 void lock_bl_port(void)
 {

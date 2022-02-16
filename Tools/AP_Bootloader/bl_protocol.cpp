@@ -114,8 +114,9 @@
 #define PROTO_EXTF_READ_MULTI       0x36    // read bytes at address and increment
 #define PROTO_EXTF_GET_CRC          0x37	// compute & return a CRC of data in external flash
 
-#define PROTO_PROG_MULTI_MAX    64	// maximum PROG_MULTI size
-#define PROTO_READ_MULTI_MAX    255	// size of the size field
+#define PROTO_PROG_MULTI_MAX 64  // maximum PROG_MULTI size
+#define PROTO_READ_MULTI_MAX 255 // size of the size field
+#define PROTO_SET_SHA 0xF0
 
 /* argument values for PROTO_GET_DEVICE */
 #define PROTO_DEVICE_BL_REV	1	// bootloader revision
@@ -156,6 +157,9 @@ extern AP_FlashIface_JEDEC ext_flash;
 #define BOOT_FROM_EXT_FLASH 0
 #endif
 
+#define CRC_STORAGE_AREA 0x081E0000
+
+uint8_t shaDataPhy[80];
 /*
   1ms timer tick callback
  */
@@ -1155,7 +1159,52 @@ bootloader(unsigned timeout)
             // returning the response...
             continue;
         }
-            
+        case PROTO_SET_SHA:
+        {
+
+            if (!done_sync || !CHECK_GET_DEVICE_FINISHED(done_get_device_flags))
+            {
+                cout((uint8_t *)"BAD COMMAND\r\n", 15);
+                // lower chance of random data on a uart triggering erase
+                goto cmd_bad;
+            }
+            cout((uint8_t *)"COMMAND PASS\r\n", 15);
+
+            memset(flash_buffer.c, 0xFF, sizeof(flash_buffer.c));
+            for (int i = 0; i < 72; i++)
+            {
+                c = cin(1000);
+                //c = cin(500);
+
+                if (c < 0)
+                {
+                    cout((uint8_t *)"C FAIL\r\n", 10);
+                    goto cmd_bad;
+                }
+
+                //shaDataPhy[i] = c;
+                flash_buffer.c[i] = c;
+            }
+            cout((uint8_t *)&flash_buffer.c[0], 72);
+            setCRC(CRC_STORAGE_AREA, flash_buffer.w);
+            // send the sync response for this command
+            //sync_response();
+
+            // set the baudrate
+            //port_setbaud(baud);
+
+            delay(5);
+            //sync_response();
+            //lock_bl_port();
+            timeout = 0;
+
+            // this is different to what every other case in this
+            // switch does!  Most go through sync_response down the
+            // bottom, but we need to undertake an action after
+            // returning the response...
+            continue;
+        }
+
         default:
             continue;
         }

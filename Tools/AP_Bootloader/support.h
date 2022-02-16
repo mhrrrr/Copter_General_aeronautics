@@ -53,6 +53,8 @@ void uprintf(const char *fmt, ...) FMT_PRINTF(1,2);
 // generate a LED sequence forever
 void led_pulses(uint8_t npulses);
 
+bool setCRC(uint32_t address, uint32_t* shaDataPhy);
+
 typedef struct mcu_des_t {
     uint16_t mcuid;
     const char *desc;

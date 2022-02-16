@@ -32,11 +32,30 @@
 #include "bl_protocol.h"
 #include "can.h"
 #include <stdio.h>
+//#include <string>
+//#include <iostream>
+//#include <sstream>
+#include "sha256.h"
 #if EXTERNAL_PROG_FLASH_MB
 #include <AP_FlashIface/AP_FlashIface_JEDEC.h>
 #endif
 
-extern "C" {
+/*              Memory details
+
+#define BOARD_FLASH_SIZE 2048
+#define FLASH_BOOTLOADER_LOAD_KB 128
+
+
+
+*/
+int inttostr(uint8_t *s, int n);
+
+#define DEBUG_BUFFER_SIZE 72
+
+#define APP_START_ADDRESS (FLASH_LOAD_ADDRESS + (FLASH_BOOTLOADER_LOAD_KB + APP_START_OFFSET_KB) * 1024U)
+#define CRC_STORE_ADDRESS 0x081E0000
+extern "C"
+{
     int main(void);
 }
 
@@ -58,15 +77,59 @@ struct boardinfo board_info = {
 #if EXTERNAL_PROG_FLASH_MB
 AP_FlashIface_JEDEC ext_flash;
 #endif
+//uint32_t buf[100];
+uint8_t bootFlag = 0;
+uint8_t dbgBuf[DEBUG_BUFFER_SIZE] = {0};
+const uint32_t *app_base = (const uint32_t *)(APP_START_ADDRESS);
+//const uint8_t  *crc_base = (uint8_t *)(0x081E0000);
+const uint32_t *crc_base = (uint32_t *)(0x081E0000);
+static char shaData[100];
+
+int inttostr(uint8_t *s, int n)
+{
+    unsigned int i = 1000000000;
+
+    if (((signed)n) < 0)
+    {
+        *s++ = '-';
+        n = -n;
+    }
+
+    while (i > n)
+        i /= 10;
+
+    do
+    {
+        *s++ = '0' + (n - n % i) / i % 10;
+    } while (i /= 10);
+
+    *s = 0;
+
+    return n;
+}
 
 int main(void)
-{
-    if (BOARD_FLASH_SIZE > 1024 && check_limit_flash_1M()) {
-        board_info.fw_size = (1024 - (FLASH_BOOTLOADER_LOAD_KB + APP_START_OFFSET_KB))*1024;
+{   
+    static union
+    {
+        uint8_t c[256];
+        uint32_t w[64];
+    } flash_buffer;
+    //uint8_t Cbuf[64];
+    static char token[8];
+    //const char s[2] = ",";
+    //uint32_t codeLen = 0;
+    if (BOARD_FLASH_SIZE > 1024 && check_limit_flash_1M())
+    {
+        board_info.fw_size = (1024 - (FLASH_BOOTLOADER_LOAD_KB + APP_START_OFFSET_KB)) * 1024;
     }
 
     bool try_boot = false;
     uint32_t timeout = HAL_BOOTLOADER_TIMEOUT;
+    SHA256 sha256;
+    //uint32_t codeLen = 0;
+    //std::string strData;
+    //std::ostringstream data;
 
 #ifdef HAL_BOARD_AP_PERIPH_ZUBAXGNSS
     // setup remapping register for ZubaxGNSS
@@ -137,13 +200,59 @@ int main(void)
         timeout = 0;
     }
 #endif
+    init_uarts();
+    cout((uint8_t *)"\r\n", 4);
 
-    if (try_boot) {
+    for (int i = 0; i < 18; i++)
+    {        
+        flash_buffer.w[i] = crc_base[i];
+    }
+    chThdSleepSeconds(2);
+    cout((uint8_t *)"In Bootloader\r\n", 29);
+    strncpy(token, (char *)flash_buffer.c, 7);
+    cout((uint8_t *)token, 8);
+    cout((uint8_t*)"\r\n", 4);
+    uint32_t len = atoi(token);
+    cout((uint8_t *)&flash_buffer.c[8], 72);
+    cout((uint8_t*)"\r\n", 4);
+
+    if (len != 0xFFFFFFFF)
+    {
+        strcpy(shaData, sha256(app_base, len));
+        cout((uint8_t*)"Calculated SHA : ", 16);
+        cout((uint8_t *)shaData, strlen((char *)shaData));
+    }
+    else
+    {
+        cout((uint8_t *)"SHA256 Not Found\r\n", 20);
+    }
+    cout((uint8_t *)"\r\n", 4);
+    chThdSleepSeconds(1);
+    memset(dbgBuf, 0, sizeof(dbgBuf) );
+    strncpy((char*)dbgBuf, (char*)&flash_buffer.c[8], 64 );
+	cout((uint8_t*)dbgBuf, strlen((char*)dbgBuf) );
+	
+	if( strncmp((char*)dbgBuf, (char*)shaData, 64) == 0 )
+	{
+        cout((uint8_t*)"\r\n", 4);
+		cout((uint8_t*)"SHA256 Matched\r\n", 16);
+		bootFlag = 1;
+	}
+	else
+	{
+        cout((uint8_t*)"\r\n", 4);
+		cout((uint8_t*)"SHA256 Mismatch\r\n", 17);
+		bootFlag = 0;
+	}
+	
+    chThdSleepSeconds(2);
+    if (try_boot && (bootFlag == 1))
+    {
         jump_to_app();
     }
 
 #if defined(BOOTLOADER_DEV_LIST)
-    init_uarts();
+    //init_uarts();
 #endif
 #if HAL_USE_CAN == TRUE || HAL_NUM_CAN_IFACES
     can_start();
@@ -158,11 +267,15 @@ int main(void)
         chThdSleep(1000);
     }
 #endif
-
+    chThdSleepSeconds(2);
+    
 #if defined(BOOTLOADER_DEV_LIST)
     while (true) {
         bootloader(timeout);
-        jump_to_app();
+        if( bootFlag == 1 )
+		{
+			jump_to_app();
+		}
     }
 #else
     // CAN only
@@ -172,7 +285,10 @@ int main(void)
             can_update();
             chThdSleep(chTimeMS2I(1));
         }
-        jump_to_app();
+        if( bootFlag == 1 )
+        {
+            jump_to_app();
+        }    
     }
 #endif
 }
