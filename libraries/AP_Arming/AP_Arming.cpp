@@ -805,6 +805,12 @@ bool AP_Arming::board_voltage_checks(bool report)
  
 // NPNT check
 bool AP_Arming::npnt_checks(bool report){
+
+    //Disabled NPNT failsafe check for SITL -> Earlier used to give warnings for SITL where there is no switch
+    #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
+        return true;
+    #endif
+
 	if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_NPNT)) {
 		if(!npnt_allowed) {
 			if(npnt_reason[0]==0) {
