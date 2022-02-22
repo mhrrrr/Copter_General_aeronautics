@@ -6,7 +6,10 @@
 
 #include <AP_DAL/AP_DAL.h>
 
+//Hal class added for debugs
+extern const AP_HAL::HAL& hal;
 #pragma GCC diagnostic ignored "-Wnarrowing"
+
 
 void NavEKF3_core::Log_Write_XKF1(uint64_t time_us) const
 {
@@ -47,6 +50,8 @@ void NavEKF3_core::Log_Write_XKF1(uint64_t time_us) const
         originHgt : originLLH.alt // WGS-84 altitude of EKF origin in cm
     };
     AP::logger().WriteBlock(&pkt, sizeof(pkt));
+
+
 }
 
 void NavEKF3_core::Log_Write_XKF2(uint64_t time_us) const
@@ -361,6 +366,51 @@ void NavEKF3::Log_Write()
     }
 
     AP::dal().start_frame(AP_DAL::FrameType::LogWriteEKF3);
+
+    /*
+    * POC: GA Debugging logs
+    * If GA_debug true, then create ins instant and log the RISI replicate for the IMU 0 (hard coded for now)
+    */
+    if(return_ga_debug()){
+            //INS object
+            const auto &ins = AP::ins();
+            //Vars for time step
+            float  delta_velocity_dt, delta_angle_dt;
+            //Vars for dv and da
+            Vector3f delta_velocity,delta_angle;
+            //IMU number
+            int imu = 0;
+
+            //Return flags for valid data
+            bool use_accel,use_gyro, acc_ret,gyro_ret;
+
+            // accel data
+            use_accel = ins.use_accel(imu);
+            if (use_accel) {
+                acc_ret = ins.get_delta_velocity(imu, delta_velocity, delta_velocity_dt);
+            }
+
+            // gryo data
+            use_gyro = ins.use_gyro(imu);
+            if (use_gyro) {
+                gyro_ret = ins.get_delta_angle(imu, delta_angle, delta_angle_dt);
+            }
+
+            //If we get any data, we log
+            if(acc_ret||gyro_ret){
+            AP::logger().Write("GADB", "TimeUS,dat,dvt,dvx,dvy,dvz,dax,day,daz", "Qffffffff",
+                                    AP_HAL::micros64(),
+                                    (double) delta_angle_dt,
+                                    (double) delta_velocity_dt,
+                                    (double) delta_velocity.x,
+                                    (double) delta_velocity.y,
+                                    (double) delta_velocity.z,
+                                    (double) delta_angle.x,
+                                    (double) delta_angle.y,
+                                    (double) delta_angle.z
+                                    );
+            }
+    }
 }
 
 void NavEKF3_core::Log_Write(uint64_t time_us)

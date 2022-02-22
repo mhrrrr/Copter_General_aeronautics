@@ -354,6 +354,9 @@ public:
     // returns true when the state estimates for the selected core are significantly degraded by vibration
     // if instance < 0, the primary instance will be used
     bool isVibrationAffected(int8_t instance) const;
+    
+    //Param accessor for the NavEKF3 Class
+    int return_ga_debug(void);
 
 private:
     uint8_t num_cores; // number of allocated cores
@@ -428,6 +431,8 @@ private:
     AP_Float _ognmTestScaleFactor;  // Scale factor applied to the thresholds used by the on ground not moving test
     AP_Float _baroGndEffectDeadZone;// Dead zone applied to positive baro height innovations when in ground effect (m)
     AP_Int8 _primary_core;          // initial core number
+
+    AP_Int8 _ga_debug ; //GA debugger for EKF params
 
 // Possible values for _flowUse
 #define FLOW_USE_NONE    0

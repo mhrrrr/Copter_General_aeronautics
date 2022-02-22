@@ -123,7 +123,6 @@
 
 // Define tuning parameters
 const AP_Param::GroupInfo NavEKF3::var_info[] = {
-
     // @Param: ENABLE
     // @DisplayName: Enable EKF3
     // @Description: This enables EKF3. Enabling EKF3 only makes the maths run, it does not mean it will be used for flight control. To use it for flight control set AHRS_EKF_TYPE=3. A reboot or restart will need to be performed after changing the value of EK3_ENABLE for it to take effect.
@@ -711,6 +710,13 @@ const AP_Param::GroupInfo NavEKF3::var_info2[] = {
     // @Increment: 1
     // @User: Advanced
     AP_GROUPINFO("PRIMARY", 8, NavEKF3, _primary_core, 0),
+
+    // @Param: GA Debugging utility
+    // @DisplayName: GA debug
+    // @Description: 1 will switch on GA debug, 0 will turn off. Advanced EKF logging is added
+    // @User: Advanced
+    AP_GROUPINFO("GA_DEBUG", 0, NavEKF3, _ga_debug, 0),
+
     
     AP_GROUPEND
 };
@@ -2002,4 +2008,9 @@ bool NavEKF3::isVibrationAffected(int8_t instance) const
         return core[instance].isVibrationAffected();
     }
     return false;
+}
+
+//Safe Param accessor for the NAVEKF3 class
+int NavEKF3::return_ga_debug(void){
+    return _ga_debug;
 }
