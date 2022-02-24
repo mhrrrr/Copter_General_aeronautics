@@ -157,6 +157,9 @@ bool AP_BattMonitor_Backend::arming_checks(char * buffer, size_t buflen) const
     bool low_voltage, low_capacity, critical_voltage, critical_capacity;
     check_failsafe_types(low_voltage, low_capacity, critical_voltage, critical_capacity);
 
+    bool batt_voltage_not_available = (_state.voltage <= 0.1);                                              // Battery voltage not available
+    bool crit_voltage_not_defined = !is_positive(_params._critical_voltage);                               // Battery critical voltage is not defined
+    bool below_crit_voltage = !crit_voltage_not_defined && (_state.voltage < _params._critical_voltage);  // Battery voltage below critical voltage
     bool below_arming_voltage = is_positive(_params._arming_minimum_voltage) &&
                                 (_state.voltage < _params._arming_minimum_voltage);
     bool below_arming_capacity = (_params._arming_minimum_capacity > 0) &&
@@ -168,7 +171,10 @@ bool AP_BattMonitor_Backend::arming_checks(char * buffer, size_t buflen) const
                                 is_positive(_params._low_voltage) &&
                                 (_params._low_voltage < _params._critical_voltage);
 
-    bool result =      update_check(buflen, buffer, below_arming_voltage, "below minimum arming voltage");
+    bool result =      update_check(buflen, buffer, batt_voltage_not_available, "battery voltage not available");
+    result = result && update_check(buflen, buffer, crit_voltage_not_defined, "battery critical voltage not defined");
+    result = result && update_check(buflen, buffer, below_crit_voltage, "battery voltage below critical voltage");
+    result = result && update_check(buflen, buffer, below_arming_voltage, "below minimum arming voltage");
     result = result && update_check(buflen, buffer, below_arming_capacity, "below minimum arming capacity");
     result = result && update_check(buflen, buffer, low_voltage,  "low voltage failsafe");
     result = result && update_check(buflen, buffer, low_capacity, "low capacity failsafe");

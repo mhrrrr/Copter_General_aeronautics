@@ -126,6 +126,9 @@ public:
 	static char npnt_reason[40];
 	bool npnt_checks(bool report);
 
+    // Vital checks
+    bool vital_checks(void) const;
+
     // method that was last used for disarm; invalid unless the
     // vehicle has been disarmed at least once.
     Method last_disarm_method() const { return _last_disarm_method; } 

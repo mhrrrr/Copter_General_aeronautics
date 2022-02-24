@@ -825,6 +825,21 @@ bool AP_Arming::npnt_checks(bool report){
 	return true;
 }
 
+// Vital checks (mandatory checks before arming)
+bool AP_Arming::vital_checks(void) const {
+
+    //1. mandatory battery check before arming
+    char buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1] {};
+    if (!AP::battery().arming_checks(sizeof(buffer), buffer)) {
+        GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Warning: Arming Denied, Reason: Battery check");
+        check_failed(true, " Battery check warning: %s",buffer);
+
+        return false;
+    }
+
+    return true;
+}
+
 /*
   check base system operations
  */
@@ -1249,7 +1264,7 @@ bool AP_Arming::arm(AP_Arming::Method method, const bool do_arming_checks)
         return false;
     }
 
-    if ((!do_arming_checks && mandatory_checks(true)) || (pre_arm_checks(true) && arm_checks(method))) {
+    if (((!do_arming_checks && mandatory_checks(true)) || (pre_arm_checks(true) && arm_checks(method))) && vital_checks()) {
         armed = true;
 
         Log_Write_Arm(!do_arming_checks, method); // note Log_Write_Armed takes forced not do_arming_checks
