@@ -127,6 +127,7 @@ private:
     bool _gps_data_good;                                        ///< set when the sentence indicates data is good
     bool _sentence_done;                                        ///< set when a sentence has been fully decoded
     bool _have_gps_vel = false;
+    bool _have_gps_yaw = false;
 
     // The result of parsing terms within a message is stored temporarily until
     // the message is completely processed and the checksum validated.

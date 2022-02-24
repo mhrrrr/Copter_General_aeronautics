@@ -502,10 +502,26 @@ bool NavEKF3_core::InitialiseFilterBootstrap(void)
     readIMUData();
     readMagData();
     readGpsData();
-    readGpsYawData();
+    bool GPSyawAvailable = readGpsYawData();
     readBaroData();
 
-    if (statesInitialised) {
+    bool AllowInitialisation = true;
+    AP_NavEKF_Source::SourceYaw yaw_source_sel = frontend->sources.getYawSource((unsigned)core_index);
+    if ((yaw_source_sel == AP_NavEKF_Source::SourceYaw::GPS) || (yaw_source_sel == AP_NavEKF_Source::SourceYaw::GPS_COMPASS_FALLBACK)) {
+        // Yaw source is GPS, so we will allow initialisation only after GPSyaw is available       
+        // checking whether GPSyaw is available
+        AllowInitialisation = GPSyawAvailable;
+        if (GPSyawAvailable) {
+            GCS_SEND_TEXT(MAV_SEVERITY_INFO, "EKF3 core %u : GPS yaw available",(unsigned)core_index);
+        } else {
+            bool isTimeModOf5s = (((unsigned)(float)(std::fmod((float)AP_HAL::millis()/1000,5)*1000)) == 0);  // is current-time a multiple of 5 seconds
+            if (isTimeModOf5s) {
+                GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "EKF3 core %u : Waiting for GPS yaw",(unsigned)core_index);
+            }
+        }
+    }   
+
+    if (statesInitialised && AllowInitialisation) {
         // we are initialised, but we don't return true until the IMU
         // buffer has been filled. This prevents a timing
         // vulnerability with a pause in IMU data during filter startup

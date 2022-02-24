@@ -343,9 +343,13 @@ bool AP_GPS_NMEA::_term_complete()
                 case _GPS_SENTENCE_HDT:
                 case _GPS_SENTENCE_THS:
                     _last_HDT_THS_ms = now;
-                    state.gps_yaw = wrap_360(_new_gps_yaw*0.01f);
-                    state.have_gps_yaw = true;
-                    state.gps_yaw_time_ms = AP_HAL::millis();
+                    if(_have_gps_yaw){
+                        if (wrap_360(_new_gps_yaw*0.01f) > 0) {
+                            state.gps_yaw = wrap_360(_new_gps_yaw*0.01f);
+                            state.have_gps_yaw = true;
+                            state.gps_yaw_time_ms = AP_HAL::millis();
+                        }
+                    }
                     // remember that we are setup to provide yaw. With
                     // a NMEA GPS we can only tell if the GPS is
                     // configured to provide yaw when it first sends a
@@ -508,10 +512,16 @@ bool AP_GPS_NMEA::_term_complete()
             _new_speed = (_parse_decimal_100(_term) * 514) / 1000;       // knots-> m/sec, approximiates * 0.514
             break;
         case _GPS_SENTENCE_HDT + 1: // Course (HDT)
-            _new_gps_yaw = _parse_decimal_100(_term);
+            _have_gps_yaw = sizeof(_term) > 0 ? true : false;
+            if(_have_gps_yaw){
+                _new_gps_yaw = _parse_decimal_100(_term);
+            }
             break;
         case _GPS_SENTENCE_THS + 1: // Course (THS)
-            _new_gps_yaw = _parse_decimal_100(_term);
+            _have_gps_yaw = sizeof(_term) > 0 ? true : false;
+            if(_have_gps_yaw){
+                _new_gps_yaw = _parse_decimal_100(_term);
+            }
             break;
         case _GPS_SENTENCE_RMC + 8: // Course (GPRMC)
         case _GPS_SENTENCE_VTG + 1: // Course (VTG)

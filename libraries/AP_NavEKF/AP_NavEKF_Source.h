@@ -75,6 +75,9 @@ public:
     // get yaw source
     SourceYaw getYawSource() const;
 
+    // get yaw source of a particular source/core
+    SourceYaw getYawSource(uint8_t) const;
+
     // align position of inactive sources to ahrs
     void align_inactive_sources();
 

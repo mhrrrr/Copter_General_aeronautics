@@ -704,7 +704,7 @@ void NavEKF3_core::readGpsData()
 }
 
 // check for new valid GPS yaw data
-void NavEKF3_core::readGpsYawData()
+bool NavEKF3_core::readGpsYawData()
 {
     const auto &gps = dal.gps();
 
@@ -721,7 +721,9 @@ void NavEKF3_core::readGpsYawData()
         const ftype min_yaw_accuracy_deg = 5.0f;
         yaw_accuracy_deg = MAX(yaw_accuracy_deg, min_yaw_accuracy_deg);
         writeEulerYawAngle(radians(yaw_deg), radians(yaw_accuracy_deg), yaw_time_ms, 2);
+        return true;
     }
+    return false;
 }
 
 // read the delta angle and corresponding time interval from the IMU

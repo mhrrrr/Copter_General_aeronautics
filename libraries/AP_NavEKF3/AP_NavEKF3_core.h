@@ -715,7 +715,7 @@ private:
     void readGpsData();
 
     // check for new valid GPS yaw data
-    void readGpsYawData();
+    bool readGpsYawData();
 
     // check for new altitude measurement data and update stored measurement if available
     void readBaroData();
