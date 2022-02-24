@@ -9,6 +9,20 @@ This document includes highlights of custom changes done over and above 4.1.1 fo
 ============================================================================================================
 
 
+GA Copter 4.1.1 v2.4beta
+------------------------------------------------------------------------------------------------------------
+Functionality:
+1. Disabling NPNT checks in SITL
+2. Added advanced EKF logging,
+	advanced EKF logging is controlled by "GA_DEBUG" parameter: 1 will switch it on, while 0 will turn it off.
+3. Added mandatory arming check for Battery, i.e. vehicle will not be armed if
+	Battery voltage is not available (or)
+	Critical battery voltage is not defined (or)
+	Battery voltage < Critical battery voltage
+4. If EKF3 cores' Yaw-source is defined as GPS, then
+	EKF3 cores are allowed to initialise only after obtaining a non-zero GPSyaw value.
+
+
 GA Copter 4.1.1 v2
 ------------------------------------------------------------------------------------------------------------
 Functionality:
