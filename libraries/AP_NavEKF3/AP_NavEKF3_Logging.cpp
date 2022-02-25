@@ -382,7 +382,7 @@ void NavEKF3::Log_Write()
             int imu = 0;
 
             //Return flags for valid data
-            bool use_accel,use_gyro, acc_ret,gyro_ret;
+            bool use_accel = false,use_gyro = false, acc_ret = false,gyro_ret = false;
 
             // accel data
             use_accel = ins.use_accel(imu);
