@@ -589,6 +589,8 @@ bool NavEKF3_core::InitialiseFilterBootstrap(void)
     // reset the output predictor states
     StoreOutputReset();
 
+    bool statesInitialisedChanged = statesInitialised; // tracks change in "statesInitialised" status
+
     // set to true now that states have be initialised
     statesInitialised = true;
 
@@ -598,7 +600,12 @@ bool NavEKF3_core::InitialiseFilterBootstrap(void)
         inactiveBias[i].accel_bias.zero();
     }
 
-    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "EKF3 IMU%u initialised",(unsigned)imu_index);
+    statesInitialisedChanged = (statesInitialisedChanged ^ statesInitialised) & statesInitialised; // becomes true when "statesInitialised" status changes from false to true
+
+    bool isTimeModOf2s = (((unsigned)(float)(std::fmod((float)AP_HAL::millis()/1000,2)*1000)) == 0);  // is current-time a multiple of 2sec
+    if (isTimeModOf2s | statesInitialisedChanged) {
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "EKF3 IMU%u initialised",(unsigned)imu_index);
+    }
 
     // we initially return false to wait for the IMU buffer to fill
     return false;
