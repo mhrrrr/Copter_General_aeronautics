@@ -430,6 +430,12 @@ protected:
     void handle_setup_signing(const mavlink_message_t &msg) const;
     virtual MAV_RESULT handle_preflight_reboot(const mavlink_command_long_t &packet);
 
+    // Handle ga_get_param
+    void handle_ga_get_param(const mavlink_message_t &msg);
+
+    // Handle ga_set_param
+    void handle_ga_set_param(const mavlink_message_t &msg);
+
     // NPNT
     void handle_npnt_status_message(const mavlink_message_t &msg);
 

@@ -3546,7 +3546,59 @@ void GCS_MAVLINK::handle_common_message(const mavlink_message_t &msg)
     case MAVLINK_MSG_ID_GA_MAV_BATT_STATUS: // GA Battery Status
     	handle_ga_mavlink_battery_status_message(msg);
     	break;
+
+    case MAVLINK_MSG_ID_GA_GET_PARAM: // GA get param
+    	handle_ga_get_param(msg);
+    	break;
+
+    case MAVLINK_MSG_ID_GA_SET_PARAM: // GA set param
+    	handle_ga_set_param(msg);
+    	break;
     }
+}
+
+// Handle ga_get_param
+void GCS_MAVLINK::handle_ga_get_param(const mavlink_message_t &msg)
+{
+    mavlink_ga_get_param_t packetin;
+    mavlink_msg_ga_get_param_decode(&msg, &packetin);
+
+    mavlink_ga_set_param_t packetout;
+    char invid_param_value[50] = "Exception:InvalidParamID";
+    char no_param_value[50] = "Exception:ValueNotAvailable";
+
+    packetout.target_system = 0;
+    packetout.target_component = 0;
+    memcpy(packetout.param_id, packetin.param_id, sizeof packetin.param_id);
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"GA_GET_PARAM request : %s",packetin.param_id);
+
+    // asssigning the default param_value as "Exception:InvalidParamID"
+    memcpy(packetout.param_val, invid_param_value, sizeof invid_param_value);
+
+    // execution based on param_id requested
+    if(strcmp(packetin.param_id,"PXHWK_ID")==0) {
+        char hwsysid[50] = {};
+        if (!hal.util->get_system_id(hwsysid)) {
+            // when not possible to obtain a value, assign param_value as "Exception:ValueNotAvailable"
+            memcpy(packetout.param_val, no_param_value, sizeof no_param_value);
+        } else {
+            memcpy(packetout.param_val, hwsysid, sizeof hwsysid);
+        }
+    }
+
+    // send ga_set_param message
+    mavlink_msg_ga_set_param_send(chan, 0, 0, packetout.param_id, packetout.param_val);
+}
+
+// Handle ga_set_param
+void GCS_MAVLINK::handle_ga_set_param(const mavlink_message_t &msg)
+{
+    mavlink_ga_set_param_t packet;
+    mavlink_msg_ga_set_param_decode(&msg, &packet);
+
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"GA_SET_PARAM of : %s",packet.param_id);
+
+    // not yet handling the param_id set request
 }
 
 // NPNT
