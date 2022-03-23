@@ -21,6 +21,11 @@ public:
     int32_t lat;
     int32_t lng;
 
+    // GA waypoint prolix parameters
+    int8_t prolix1;
+    int8_t prolix2;
+    int8_t prolix3;
+
     /// enumeration of possible altitude types
     enum class AltFrame {
         ABSOLUTE = 0,

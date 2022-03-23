@@ -629,19 +629,22 @@ struct PACKED PackedLocation {
     int32_t alt:24;                                     ///< param 2 - Altitude in centimeters (meters * 100) see LOCATION_ALT_MAX_M
     int32_t lat;                                        ///< param 3 - Latitude * 10**7
     int32_t lng;                                        ///< param 4 - Longitude * 10**7
+    
+    int8_t wayp_prlx1;                                  ///< param 5 - GA waypoint prolix1
+    int8_t wayp_prlx2;                                  ///< param 6 - GA waypoint prolix2
+    int8_t wayp_prlx3;                                  ///< param 7 - GA waypoint prolix3
 };
 
 union PackedContent {
     // location
     PackedLocation location;      // Waypoint location
 
-    // raw bytes, for reading/writing to eeprom. Note that only 10
+    // raw bytes, for reading/writing to eeprom. Note that only 13 (originally, 10)
     // bytes are available if a 16 bit command ID is used
-    uint8_t bytes[12];
-
+    uint8_t bytes[15];
 };
 
-assert_storage_size<PackedContent, 12> assert_storage_size_PackedContent;
+assert_storage_size<PackedContent, 15> assert_storage_size_PackedContent;
 
 /// load_cmd_from_storage - load command from storage
 ///     true is return if successful
@@ -675,11 +678,11 @@ bool AP_Mission::read_cmd_from_storage(uint16_t index, Mission_Command& cmd) con
     if (b1 == 0) {
         cmd.id = _storage.read_uint16(pos_in_storage+1);
         cmd.p1 = _storage.read_uint16(pos_in_storage+3);
-        _storage.read_block(packed_content.bytes, pos_in_storage+5, 10);
+        _storage.read_block(packed_content.bytes, pos_in_storage+5, 13);
     } else {
         cmd.id = b1;
         cmd.p1 = _storage.read_uint16(pos_in_storage+1);
-        _storage.read_block(packed_content.bytes, pos_in_storage+3, 12);
+        _storage.read_block(packed_content.bytes, pos_in_storage+3, 15);
     }
 
     if (stored_in_location(cmd.id)) {
@@ -700,12 +703,17 @@ bool AP_Mission::read_cmd_from_storage(uint16_t index, Mission_Command& cmd) con
         cmd.content.location.alt = packed_content.location.alt;
         cmd.content.location.lat = packed_content.location.lat;
         cmd.content.location.lng = packed_content.location.lng;
+        if (cmd.id == MAV_CMD_NAV_WAYPOINT) {
+            cmd.content.location.prolix1 = packed_content.location.wayp_prlx1;
+            cmd.content.location.prolix2 = packed_content.location.wayp_prlx2;
+            cmd.content.location.prolix3 = packed_content.location.wayp_prlx3;
+        }
     } else {
         // all other options in Content are assumed to be packed:
-        static_assert(sizeof(cmd.content) >= 12,
+        static_assert(sizeof(cmd.content) >= 15,
                       "content is big enough to take bytes");
         // (void *) cast to specify gcc that we know that we are copy byte into a non trivial type and leaving 4 bytes untouched
-        memcpy((void *)&cmd.content, packed_content.bytes, 12);
+        memcpy((void *)&cmd.content, packed_content.bytes, 15);
     }
 
     // set command's index to it's position in eeprom
@@ -764,11 +772,16 @@ bool AP_Mission::write_cmd_to_storage(uint16_t index, const Mission_Command& cmd
         packed.location.alt = cmd.content.location.alt;
         packed.location.lat = cmd.content.location.lat;
         packed.location.lng = cmd.content.location.lng;
+        if (cmd.id == MAV_CMD_NAV_WAYPOINT) {
+            packed.location.wayp_prlx1 = cmd.content.location.prolix1;
+            packed.location.wayp_prlx2 = cmd.content.location.prolix2;
+            packed.location.wayp_prlx3 = cmd.content.location.prolix3;
+        }
     } else {
         // all other options in Content are assumed to be packed:
-        static_assert(sizeof(packed.bytes) >= 12,
+        static_assert(sizeof(packed.bytes) >= 15,
                       "packed.bytes is big enough to take content");
-        memcpy(packed.bytes, &cmd.content, 12);
+        memcpy(packed.bytes, &cmd.content, 15);
     }
 
     // calculate where in storage the command should be placed
@@ -777,13 +790,13 @@ bool AP_Mission::write_cmd_to_storage(uint16_t index, const Mission_Command& cmd
     if (cmd.id < 256) {
         _storage.write_byte(pos_in_storage, cmd.id);
         _storage.write_uint16(pos_in_storage+1, cmd.p1);
-        _storage.write_block(pos_in_storage+3, packed.bytes, 12);
+        _storage.write_block(pos_in_storage+3, packed.bytes, 15);
     } else {
         // if the command ID is above 256 we store a 0 followed by the 16 bit command ID
         _storage.write_byte(pos_in_storage, 0);
         _storage.write_uint16(pos_in_storage+1, cmd.id);
         _storage.write_uint16(pos_in_storage+3, cmd.p1);
-        _storage.write_block(pos_in_storage+5, packed.bytes, 10);
+        _storage.write_block(pos_in_storage+5, packed.bytes, 13);
     }
 
     // remember when the mission last changed
@@ -886,6 +899,9 @@ MAV_MISSION_RESULT AP_Mission::mavlink_int_to_mission_cmd(const mavlink_mission_
 #else
         // delay at waypoint in seconds (this is for copters???)
         cmd.p1 = packet.param1;
+        cmd.content.location.prolix1 = (int8_t)packet.param2;
+        cmd.content.location.prolix2 = (int8_t)packet.param3;
+        cmd.content.location.prolix3 = (int8_t)packet.param4;
 #endif
     }
     break;
@@ -1337,6 +1353,9 @@ bool AP_Mission::mission_cmd_to_mavlink_int(const AP_Mission::Mission_Command& c
 #else
         // delay at waypoint in seconds
         packet.param1 = cmd.p1;
+        packet.param2 = cmd.content.location.prolix1;
+        packet.param3 = cmd.content.location.prolix2;
+        packet.param4 = cmd.content.location.prolix3;
 #endif
         break;
 

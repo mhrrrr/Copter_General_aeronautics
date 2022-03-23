@@ -30,6 +30,9 @@ void Location::zero(void)
 Location::Location(int32_t latitude, int32_t longitude, int32_t alt_in_cm, AltFrame frame)
 {
     zero();
+    prolix1 = 0;
+    prolix2 = 0;
+    prolix3 = 0;
     lat = latitude;
     lng = longitude;
     set_alt_cm(alt_in_cm, frame);
@@ -359,7 +362,7 @@ bool Location::sanitize(const Location &defaultLoc)
 }
 
 // make sure we know what size the Location object is:
-assert_storage_size<Location, 16> _assert_storage_size_Location;
+assert_storage_size<Location, 20> _assert_storage_size_Location;
 
 
 // return bearing in centi-degrees from location to loc2
