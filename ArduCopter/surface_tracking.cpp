@@ -101,3 +101,31 @@ void Copter::SurfaceTracking::set_surface(Surface new_surface)
     surface = new_surface;
     reset_target = true;
 }
+
+// this function essentially replicates logics defined function: Copter::SurfaceTracking::update_surface_offset()
+// get a valid rangefinder altitude (returns -1, when not valid/not available)
+int32_t Copter::SurfaceTracking::get_valid_rangefinder_alt() const
+{
+#if RANGEFINDER_ENABLED == ENABLED  
+    // Valid only if Rangefinder is terrain/ground facing
+    // check tracking state and that range finders are healthy
+    if ((surface == Surface::GROUND) && copter.rangefinder.has_orientation(ROTATION_PITCH_270) && copter.rangefinder_alt_ok() && (copter.rangefinder_state.glitch_count == 0)) {
+        if (copter.rangefinder.status_orient(ROTATION_PITCH_270) == RangeFinder::Status::Good) {
+            RangeFinderState &rf_state = copter.rangefinder_state;
+            
+            int32_t max_rngfnd_alt = copter.rangefinder.max_distance_cm_orient(ROTATION_PITCH_270); // max-reliably-measureable-distance of the rangefinder that is facing downwards
+            int32_t min_rngfnd_alt = copter.rangefinder.min_distance_cm_orient(ROTATION_PITCH_270); // min-reliably-measureable-distance of the rangefinder that is facing downwards
+            int32_t rng_fnd_alt = (int32_t)rf_state.alt_cm; // RangeFinder Altitude
+            int32_t rng_fnd_alt_filt = (int32_t)rf_state.alt_cm_filt.get(); // RangeFinder Altitude filtered
+ 
+            if ((rng_fnd_alt >= min_rngfnd_alt) && (rng_fnd_alt <= max_rngfnd_alt)) {
+                return rng_fnd_alt_filt;       
+            }
+        }
+    }
+
+    return -1;
+#else
+    return -1;
+#endif
+}

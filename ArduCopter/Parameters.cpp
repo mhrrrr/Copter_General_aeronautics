@@ -1069,6 +1069,16 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_GROUPINFO("GUID_TIMEOUT", 46, ParametersG2, guided_timeout, 3.0),
 #endif
 
+#if RANGEFINDER_ENABLED == ENABLED
+    // @Param: LAND_TERR_UND
+    // @DisplayName: Land considering local Terrain undulations
+    // @Description: If this value is 0 or positive, the local terrain while landing (in Land Mode) is tracked using Rangefinder. This value is the +/- terrain altitude change wrt home in cm (default = 500). When rangefinder glitches or no value is obtained, then the altitude being tracked is EKFNav Altitude and at this parameter's value the descent rate is reduced to LAND_SPEED_LOW to prevent Landing at high speeds. -1:Disable rangefinder based landing, 0:Flat terrain, >0:Terrain in undulated
+    // @Units: cm
+    // @Range: -1 10000
+    // @User: Advanced
+    AP_GROUPINFO("LAND_TERR_UND", 47, ParametersG2, land_consider_local_Terr_und, 50), 
+#endif
+
     AP_GROUPEND
 };
 

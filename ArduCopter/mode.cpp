@@ -23,7 +23,10 @@ Mode::Mode(void) :
     channel_throttle(copter.channel_throttle),
     channel_yaw(copter.channel_yaw),
     G_Dt(copter.G_Dt)
-{ };
+{ 
+    use_Alt = 0;
+    reset_land_params();
+};
 
 // return the static controller object corresponding to supplied mode
 Mode *Copter::mode_from_mode_num(const Mode::Number mode)
@@ -340,6 +343,9 @@ void Copter::exit_mode(Mode *&old_flightmode,
     // perform cleanup required for each flight mode
     old_flightmode->exit();
 
+    // when changing modes, reset the landing parameters for all required modes
+    reset_req_modes_land_params();
+
 #if FRAME_CONFIG == HELI_FRAME
     // firmly reset the flybar passthrough to false when exiting acro mode.
     if (old_flightmode == &mode_acro) {
@@ -526,11 +532,75 @@ void Mode::land_run_vertical_control(bool pause_descent)
         // Don't speed up for landing.
         max_land_descent_velocity = MIN(max_land_descent_velocity, -abs(g.land_speed));
 
+        use_Alt = get_alt_above_ground_cm();
+        int16_t terrain_undul_var = constrain_int16(g2.land_consider_local_Terr_und.get(),-1,10000);; // local terrain undulations/variations wrt home
+        int32_t RNGFNDAlt = copter.surface_tracking.get_valid_rangefinder_alt(); // Processed/filtered Rangefinder Altitude
+
+        if (terrain_undul_var != (int16_t)g2.land_consider_local_Terr_und.get()) {
+            g2.land_consider_local_Terr_und.set_and_notify(terrain_undul_var); // setting the parameter back within contraints if greater than the range defined
+        }      
+
+        // setting whether to use rangefinder Alt or not and also printing the status text in GCS
+        if (terrain_undul_var >= 0) {
+            if (land_status_txt_en[0]) {
+                GCS_SEND_TEXT(MAV_SEVERITY_WARNING,"Landing (using rangefinder)");
+                land_status_txt_en[0] = false;
+                land_status_txt_en[1] = true;
+            }
+            
+            if (RNGFNDAlt >= 0) {
+                if (land_status_txt_en[2]) {
+                    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"Tracking terrain with Rangefinder Alt");
+                    land_status_txt_en[2] = false;
+                    land_status_txt_en[3] = true;
+                }
+
+                use_Alt = RNGFNDAlt;
+            } else {
+                if (land_status_txt_en[3]) {
+                    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"No Rangefinder value, falling-back to EKF Alt");
+                    land_status_txt_en[2] = true;
+                    land_status_txt_en[3] = false;
+                }
+            }
+        } else if (land_status_txt_en[1]) {
+            GCS_SEND_TEXT(MAV_SEVERITY_WARNING,"Landing (not using rangefinder)");
+            land_status_txt_en[0] = true;
+            land_status_txt_en[1] = false;
+        }
+
         // Compute a vertical velocity demand such that the vehicle approaches g2.land_alt_low. Without the below constraint, this would cause the vehicle to hover at g2.land_alt_low.
-        cmb_rate = sqrt_controller(MAX(g2.land_alt_low,100)-get_alt_above_ground_cm(), pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z_cmss(), G_Dt);
+        cmb_rate = sqrt_controller(MAX(g2.land_alt_low,100)-use_Alt, pos_control->get_pos_z_p().kP(), pos_control->get_max_accel_z_cmss(), G_Dt);
+
+        if (terrain_undul_var >= 0) {
+            // cmb_rate_prev actually changes slowly towards minimum descent rate (see below)
+            if ((RNGFNDAlt < 0) && (land_low_descent_started || (use_Alt < (MAX(g2.land_alt_low,100)+terrain_undul_var)))) {
+                cmb_rate = cmb_rate_prev;
+            } else {
+                cmb_rate = constrain_float(cmb_rate, cmb_rate_prev-(G_Dt*land_des_rate_slew_down), cmb_rate_prev+(G_Dt*land_des_rate_slew_down));
+            }
+        }
 
         // Constrain the demanded vertical velocity so that it is between the configured maximum descent speed and the configured minimum descent speed.
         cmb_rate = constrain_float(cmb_rate, max_land_descent_velocity, -abs(g.land_speed));
+
+        if (!land_low_descent_started && (cmb_rate > (max_land_descent_velocity + -abs(g.land_speed))/2)) {
+            if (land_status_txt_en[4]) {
+                GCS_SEND_TEXT(MAV_SEVERITY_WARNING,"Initiated Low Speed descent");
+                land_status_txt_en[4] = false;
+            }
+            
+            land_low_descent_started = true;
+        } else if (land_low_descent_started && (cmb_rate < (max_land_descent_velocity + -abs(g.land_speed))/2)) {
+            if (!land_status_txt_en[4]) {
+                GCS_SEND_TEXT(MAV_SEVERITY_WARNING,"Low Speed descent revoked");
+                land_status_txt_en[4] = true;
+            }
+            
+            land_low_descent_started = false;
+        }
+
+        cmb_rate_prev = cmb_rate + (G_Dt*land_des_rate_slew_up);
 
 #if PRECISION_LANDING == ENABLED
         const bool navigating = pos_control->is_active_xy();
@@ -551,6 +621,19 @@ void Mode::land_run_vertical_control(bool pause_descent)
     // update altitude target and call position controller
     pos_control->land_at_climb_rate_cm(cmb_rate, ignore_descent_limit);
     pos_control->update_z_controller();
+}
+
+// reset landing parameters values
+bool Mode::reset_land_params() 
+{
+    land_low_descent_started = false;
+    cmb_rate_prev = -300; // initialising cmb_rate_prev (previous descent rate) to -300cm/s
+    land_status_txt_en[0] = true;
+    land_status_txt_en[1] = true;
+    land_status_txt_en[2] = true;
+    land_status_txt_en[3] = true;
+    land_status_txt_en[4] = true;
+    return true;
 }
 
 void Mode::land_run_horizontal_control()

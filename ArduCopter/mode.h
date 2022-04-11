@@ -130,6 +130,14 @@ protected:
     };
     AltHoldModeState get_alt_hold_state(float target_climb_rate_cms);
 
+    // Landing parameters (used for Rangefinder based terrain tracking)
+    const uint8_t land_des_rate_slew_up = 30;   // descent rate slew up (30 cm/s)
+    const uint8_t land_des_rate_slew_down = 100;  // descent rate slew down (100 cm/s)
+    bool land_low_descent_started;      // started descending at LAND_SPEED
+    int32_t use_Alt;                    // The altitude which is used while Landing
+    float cmb_rate_prev;                // previous sample climb rate
+    bool land_status_txt_en[5];         // enable flag for printing landing status in GCS
+
     // convenience references to avoid code churn in conversion:
     Parameters &g;
     ParametersG2 &g2;
@@ -184,6 +192,9 @@ protected:
     static float auto_takeoff_no_nav_alt_cm;
 
 public:
+    // reset the landing parameters
+    bool reset_land_params();
+    
     // Navigation Yaw control
     class AutoYaw {
 

@@ -139,7 +139,10 @@ void Copter::set_land_complete(bool b)
     const bool mode_disarms_on_land = flightmode->allows_arming(AP_Arming::Method::LANDING) && !flightmode->has_manual_throttle();
 
     if (ap.land_complete && motors->armed() && disarm_on_land_configured && mode_disarms_on_land) {
+        reset_req_modes_land_params();
         arming.disarm(AP_Arming::Method::LANDED);
+    } else if (ap.land_complete && motors->armed()) {
+        reset_req_modes_land_params();
     }
 }
 
@@ -202,4 +205,13 @@ void Copter::update_throttle_mix()
         }
     }
 #endif
+}
+
+// Reset the Landing parameters for all required modes
+void Copter::reset_req_modes_land_params()
+{
+    copter.mode_land.reset_land_params();
+    copter.mode_rtl.reset_land_params();
+    copter.mode_auto.reset_land_params();
+    copter.mode_guided.reset_land_params();
 }

@@ -643,6 +643,7 @@ public:
 
 #if RANGEFINDER_ENABLED == ENABLED
     AP_Float rangefinder_filt;
+    AP_Int16 land_consider_local_Terr_und;
 #endif
 
 #if MODE_GUIDED_ENABLED == ENABLED

@@ -288,6 +288,9 @@ private:
         // set surface to track
         void set_surface(Surface new_surface);
 
+        // get valid rangefinder altitude (returns -1, when not valid/not available)
+        int32_t get_valid_rangefinder_alt() const;
+
     private:
         Surface surface = Surface::GROUND;
         uint32_t last_update_ms;    // system time of last update to target_alt_cm
@@ -779,6 +782,9 @@ private:
     // landing_gear.cpp
     void landinggear_update();
 #endif
+
+    // Reset the Landing parameters for all the required modes
+    void reset_req_modes_land_params();
 
     // standby.cpp
     void standby_update();
