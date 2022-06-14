@@ -9,6 +9,38 @@ This document includes highlights of custom changes done over and above 4.1.1 fo
 ============================================================================================================
 
 
+GA Copter 4.1.1 v4
+------------------------------------------------------------------------------------------------------------
+Functionality:
+1. With EKF3 Yaw source set as GPS, the GCS gets flooded with "EKF3 IMUx Initialised" messages until a valid
+	GPSyaw is obtained. 
+	This message now appears only for the first time and later, every 2seconds.
+2. Added (mavlink) handling of GA_GET_PARAM request from Companion-Computer.
+	Currently handles requests for:
+		a. "PXHWK_ID": the Pixhawk/Cube board's serial no.
+3. Added (mavlink) handling of GA_SET_PARAM request from Companion-Computer.
+	Currently only this function structure is defined.
+4. Following MAVLink messages added (in the MAVLink submodule currently linked to GA’s MAVLink repo):
+	a. Message ID = 7001; Name = GA_SET_PARAM
+	b. Message ID = 7002; Name = GA_GET_PARAM
+	c. Message ID = 7003; Name = GA_PARAM
+5. The mavlink "MAV_CMD_NAV_WAYPOINT" message parameters param2, param3 & param4 can now be utilized.
+	These parameters are allocated 1byte each, and are of Integer datatype, so they take values between -127 & 128.
+		Note: The size of the each mission item had to be increased (to 18bytes from 15bytes) as a result, therefore
+		the maximum number of mission items that can be uploaded/stored is now limited to 
+			a. CubeBlack: ~540
+			b. CubeOrange: ~1080
+
+Controls:
+1. Landing using Rangefinder in modes Land, RTL & Auto to track the proper local-terrain altitude
+	To disable this, set "LAND_TERR_UND" = -1
+	To enable this,  set "LAND_TERR_UND" as the +/- terrain-altitude variations/undulations with respect to Home (in cm)
+		Note: "LAND_TERR_UND" range is [-1,10000]cm. 
+		      "LAND_TERR_UND" value is used here as Rangefinder failsafe. Therefore, whenever Rangefinder has issues, 
+		  	  the vehicle descent speed reduces to "LAND_SPEED" if EKFAlt <= ("LAND_TERR_UND" + "LAND_ALT_LOW")cm
+			  and reverts to normal functionality on Rangefinder recovery.
+
+
 GA Copter 4.1.1 v3
 ------------------------------------------------------------------------------------------------------------
 Functionality:
