@@ -8,7 +8,7 @@
 # This pipeline can be extended to deploy these .bin/.apj files 
 
 
-image: ubuntu
+image: ubuntu:focal
 
 definitions: 
   steps:
