@@ -484,6 +484,11 @@ bool AP_Arming::gps_checks(bool report)
             return false;
         }
 
+        if (gps.status() < AP_GPS::GPS_OK_FIX_3D_RTK_FLOAT) {
+            check_failed(ARMING_CHECK_GPS, report, "GPS waiting for RTX Fix");
+            return false;
+        }
+
         //GPS update rate acceptable
         if (!gps.is_healthy()) {
             check_failed(ARMING_CHECK_GPS, report, "GPS is not healthy");
