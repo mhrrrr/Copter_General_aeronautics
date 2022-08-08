@@ -819,7 +819,7 @@ bool AP_Arming::npnt_checks(bool report){
 	if ((checks_to_perform & ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_NPNT)) {
 		if(!npnt_allowed) {
 			if(npnt_reason[0]==0) {
-				check_failed(ARMING_CHECK_NPNT, report, "NPNT not Initialized");
+				check_failed(ARMING_CHECK_NPNT, report, "Awaiting arming clearance from CC");
 			}
             else {
                 check_failed(ARMING_CHECK_NPNT, report, "%s",(const char*)&npnt_reason);
