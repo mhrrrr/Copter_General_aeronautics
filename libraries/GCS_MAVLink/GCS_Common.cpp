@@ -93,7 +93,7 @@ GCS_MAVLINK::GCS_MAVLINK(GCS_MAVLINK_Parameters &parameters,
                          AP_HAL::UARTDriver &uart)
 {
     _port = &uart;
-
+    gcs().sysid_mycc_seen(0);
     streamRates = parameters.streamRates;
 }
 
@@ -3327,10 +3327,19 @@ void GCS_MAVLINK::handle_osd_param_config(const mavlink_message_t &msg) const
 
 void GCS_MAVLINK::handle_heartbeat(const mavlink_message_t &msg) const
 {
-    // if the heartbeat is from our GCS then we don't failsafe for
+    // if the heartbeat is from our GCS/CC then we don't failsafe for
     // now...
     if (msg.sysid == sysid_my_gcs()) {
         gcs().sysid_myggcs_seen(AP_HAL::millis());
+    }
+
+    // Simply, if the IDs mentioned in the packet matches the specified CC ID values, then
+    // CC's last seen is updated
+    if ((msg.sysid == CC_SYS_ID) && (msg.compid == CC_COMP_ID)) {
+        if (gcs().sysid_mycc_last_seen_time_ms() == 0) {
+            GCS_SEND_TEXT(MAV_SEVERITY_INFO,"CC connection established");
+        }
+        gcs().sysid_mycc_seen(AP_HAL::millis());
     }
 }
 
@@ -3612,7 +3621,8 @@ void GCS_MAVLINK::handle_npnt_status_message(const mavlink_message_t &msg)
 }
 
 // GA Battery Status
-void GCS_MAVLINK::handle_ga_mavlink_battery_status_message(const mavlink_message_t &msg){
+void GCS_MAVLINK::handle_ga_mavlink_battery_status_message(const mavlink_message_t &msg)
+{
     mavlink_ga_mav_batt_status_t packet;
     mavlink_msg_ga_mav_batt_status_decode(&msg, &packet);
 

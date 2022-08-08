@@ -26,6 +26,8 @@
 #include "ap_message.h"
 
 #define GCS_DEBUG_SEND_MESSAGE_TIMINGS 0
+#define CC_SYS_ID 1     // Companion Computer System ID
+#define CC_COMP_ID 10   // Companion Computer Component ID
 
 #ifndef HAL_NO_GCS
 
@@ -937,6 +939,16 @@ public:
         _sysid_mygcs_last_seen_time_ms = seen_time_ms;
     }
 
+    // last time traffic was seen from my designated CC.
+    // Traffic includes heartbeats and some control messages.
+    uint32_t sysid_mycc_last_seen_time_ms() const {
+        return _sysid_mycc_last_seen_time_ms;
+    }
+    // called when valid traffic has been seen from our GCS
+    void sysid_mycc_seen(uint32_t seen_time_ms) {
+        _sysid_mycc_last_seen_time_ms = seen_time_ms;
+    }
+
     void send_to_active_channels(uint32_t msgid, const char *pkt);
 
     void send_text(MAV_SEVERITY severity, const char *fmt, ...) FMT_PRINTF(3, 4);
@@ -1044,6 +1056,9 @@ private:
 
     // time we last saw traffic from our GCS
     uint32_t _sysid_mygcs_last_seen_time_ms;
+
+    // time we last saw traffic from our CC
+    uint32_t _sysid_mycc_last_seen_time_ms;
 
     void service_statustext(void);
 #if HAL_MEM_CLASS <= HAL_MEM_CLASS_192 || CONFIG_HAL_BOARD == HAL_BOARD_SITL

@@ -91,6 +91,10 @@ void OreoLED_I2C::update()
         return;    // don't go any further if in gcs failsafe
     }
 
+    if (mode_failsafe_cc()) {
+        return;    // don't go any further if in cc failsafe
+    }
+
     set_standard_colors();
 
     if (mode_failsafe_batt()) {
@@ -174,6 +178,20 @@ bool OreoLED_I2C::mode_failsafe_gcs()
         set_rgb(OREOLED_BACKRIGHT, OREOLED_PATTERN_STROBE, 255, 50, 0,0,0,0,PERIOD_SLOW,0);
     }
     return AP_Notify::flags.failsafe_gcs;
+}
+
+
+// Procedure for when in CC failsafe (basically, a copy of "Procedure for when in GCS failsafe")
+// LEDs perform alternating yellow X pattern
+bool OreoLED_I2C::mode_failsafe_cc()
+{
+    if (AP_Notify::flags.failsafe_cc) {
+        set_rgb(OREOLED_FRONTLEFT, OREOLED_PATTERN_STROBE, 255, 50, 0,0,0,0,PERIOD_SLOW,0);
+        set_rgb(OREOLED_FRONTRIGHT, OREOLED_PATTERN_STROBE, 255, 50, 0,0,0,0,PERIOD_SLOW,PO_ALTERNATE);
+        set_rgb(OREOLED_BACKLEFT, OREOLED_PATTERN_STROBE, 255, 50, 0,0,0,0,PERIOD_SLOW,PO_ALTERNATE);
+        set_rgb(OREOLED_BACKRIGHT, OREOLED_PATTERN_STROBE, 255, 50, 0,0,0,0,PERIOD_SLOW,0);
+    }
+    return AP_Notify::flags.failsafe_cc;
 }
 
 

@@ -529,6 +529,9 @@ void Copter::three_hz_loop()
     // check if we've lost contact with the ground station
     failsafe_gcs_check();
 
+    // check if we've lost contact with the companion computer
+    failsafe_cc_check();
+
     // check if we've lost terrain data
     failsafe_terrain_check();
 

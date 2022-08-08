@@ -118,6 +118,7 @@ private:
     bool mode_init(void);
     bool mode_failsafe_radio(void);
     bool mode_failsafe_gcs(void);
+    bool mode_failsafe_cc(void);
     bool set_standard_colors(void);
     bool mode_failsafe_batt(void);
     bool mode_auto_flight(void);

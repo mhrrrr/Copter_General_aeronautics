@@ -1,4 +1,5 @@
 #include "Copter.h"
+#include <cstdint>
 
 /*
  *       This event will be called when the failsafe changes
@@ -218,6 +219,116 @@ void Copter::failsafe_gcs_off_event(void)
     gcs().send_text(MAV_SEVERITY_WARNING, "GCS Failsafe Cleared");
     AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_GCS, LogErrorCode::FAILSAFE_RESOLVED);
 }
+
+
+// failsafe_cc_check - check for companion computer failsafe
+// copy/reuse of failsafe_gcs_check()
+void Copter::failsafe_cc_check()
+{
+    // CC failsafe parameter checks & contraints
+    const uint8_t failsafe_cc_option = uint8_t(constrain_int16(g2.failsafe_cc, 0, 1));
+    const uint32_t cc_timeout_ms = uint32_t(constrain_int16(g2.fs_cc_timeout, 1, 60)* 1000.0f);
+
+    if (failsafe_cc_option != (uint8_t)g2.failsafe_cc.get()) {
+        g2.failsafe_cc.set_and_notify(failsafe_cc_option); // setting the parameter back within contraints
+    }
+
+    if (cc_timeout_ms != (uint32_t)(g2.fs_cc_timeout.get()*1000.0f)) {
+        g2.fs_cc_timeout.set_and_notify((uint8_t)(cc_timeout_ms/1000)); // setting the parameter back within contraints
+    }
+
+    // Bypass CC failsafe checks if disabled
+    if (failsafe_cc_option == (uint8_t)FS_GCS_DISABLED) {
+        return;
+    }
+
+    const uint32_t cc_last_seen_ms = gcs().sysid_mycc_last_seen_time_ms();
+    if (cc_last_seen_ms == 0) {
+        return;
+    }
+
+    // calc time since last seen cc update
+    // note: this only looks at the heartbeat/communication from the device_id set by sysid_my_cc
+    const uint32_t last_cc_update_ms = millis() - cc_last_seen_ms;
+
+    // Determine which event to trigger
+    if (last_cc_update_ms < cc_timeout_ms && failsafe.cc) {
+        // Recovery from a CC failsafe
+        set_failsafe_cc(false);
+        failsafe_cc_off_event();
+
+    } else if (last_cc_update_ms < cc_timeout_ms && !failsafe.cc) {
+        // No problem, do nothing
+
+    } else if (last_cc_update_ms > cc_timeout_ms && failsafe.cc) {
+        // Already in failsafe, do nothing
+
+    } else if (last_cc_update_ms > cc_timeout_ms && !failsafe.cc) {
+        // New CC failsafe event, trigger events
+        set_failsafe_cc(true);
+        failsafe_cc_on_event();
+    }
+}
+
+
+// failsafe_cc_on_event - action(s) to take when companion computer contact is lost
+// copy/reuse of failsafe_gcs_on_event()
+void Copter::failsafe_cc_on_event(void)
+{
+    AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_CC, LogErrorCode::FAILSAFE_OCCURRED);
+    RC_Channels::clear_overrides();
+
+    // convert the desired failsafe response to the Failsafe_Action enum
+    Failsafe_Action desired_action;
+    switch (g2.failsafe_cc) {
+        case (int8_t)FS_GCS_DISABLED:
+            desired_action = Failsafe_Action_None;
+            break;
+        case (int8_t)FS_GCS_ENABLED_ALWAYS_RTL:
+            desired_action = Failsafe_Action_RTL;
+            break;
+        default: // if an invalid parameter value is set, the fallback is RTL
+            desired_action = Failsafe_Action_RTL;
+    }
+
+    // Conditions to deviate from FS_CC_ENABLE parameter setting
+    if (!motors->armed()) {
+        desired_action = Failsafe_Action_None;
+        gcs().send_text(MAV_SEVERITY_WARNING, "CC Failsafe");
+
+    } else if (should_disarm_on_failsafe()) {
+        // should immediately disarm when we're on the ground
+        arming.disarm(AP_Arming::Method::CCFAILSAFE);
+        desired_action = Failsafe_Action_None;
+        gcs().send_text(MAV_SEVERITY_WARNING, "CC Failsafe -> Disarming");
+
+    } else if (flightmode->is_landing() && ((battery.has_failsafed() && battery.get_highest_failsafe_priority() <= FAILSAFE_LAND_PRIORITY))) {
+        // Allow landing to continue when battery failsafe requires it (not a user option)
+        gcs().send_text(MAV_SEVERITY_WARNING, "CC + Battery Failsafe -> Continuing Landing");
+        desired_action = Failsafe_Action_Land;
+
+    } else if (flightmode->is_landing() && failsafe_option(FailsafeOption::CONTINUE_IF_LANDING)) {
+        // Allow landing to continue when FS_OPTIONS is set to continue landing
+        gcs().send_text(MAV_SEVERITY_WARNING, "CC Failsafe -> Continuing Landing");
+        desired_action = Failsafe_Action_Land;
+
+    } else {
+        gcs().send_text(MAV_SEVERITY_WARNING, "CC Failsafe");
+    }
+
+    // Call the failsafe action handler
+    do_failsafe_action(desired_action, ModeReason::CC_FAILSAFE);
+}
+
+
+// failsafe_cc_off_event - actions to take when companion computer contact is restored
+// copy/reuse of failsafe_gcs_off_event()
+void Copter::failsafe_cc_off_event(void)
+{
+    gcs().send_text(MAV_SEVERITY_WARNING, "CC Failsafe Cleared");
+    AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_CC, LogErrorCode::FAILSAFE_RESOLVED);
+}
+
 
 // executes terrain failsafe if data is missing for longer than a few seconds
 void Copter::failsafe_terrain_check()

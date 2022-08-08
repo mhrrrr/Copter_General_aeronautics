@@ -649,6 +649,11 @@ public:
 #if MODE_GUIDED_ENABLED == ENABLED
     AP_Float guided_timeout;
 #endif
+
+// Companion computer failsafe parameters
+AP_Int8     failsafe_cc;                // companion computer failsafe enable/behaviour
+AP_Int8     fs_cc_timeout;              // companion computer failsafe timeout (seconds)
+
 };
 
 extern const AP_Param::Info        var_info[];

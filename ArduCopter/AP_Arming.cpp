@@ -61,6 +61,7 @@ bool AP_Arming_Copter::run_pre_arm_checks(bool display_failure)
         & pilot_throttle_checks(display_failure)
         & oa_checks(display_failure)
         & gcs_failsafe_check(display_failure)
+        & cc_failsafe_check(display_failure)
         & winch_checks(display_failure)
         & alt_checks(display_failure)
         & AP_Arming::pre_arm_checks(display_failure);
@@ -599,6 +600,17 @@ bool AP_Arming_Copter::gcs_failsafe_check(bool display_failure)
     return true;
 }
 
+// Check CC failsafe
+bool AP_Arming_Copter::cc_failsafe_check(bool display_failure)
+{
+    uint32_t cc_last_seen_ms = gcs().sysid_mycc_last_seen_time_ms();
+    if ((cc_last_seen_ms == 0 || cc_last_seen_ms <= (millis()-1000)) && (copter.g2.failsafe_cc == 1)) {
+        check_failed(display_failure, "CC Failsafe");
+        return false;
+    }
+    return true;
+}
+
 // check winch
 bool AP_Arming_Copter::winch_checks(bool display_failure) const
 {
@@ -643,6 +655,12 @@ bool AP_Arming_Copter::arm_checks(AP_Arming::Method method)
     // always check if inertial nav has started and is ready
     if (!ahrs.healthy()) {
         check_failed(true, "AHRS not healthy");
+        return false;
+    }
+
+    // do not let the vehicle arm if [CC failsafe is turned ON] and [CC is not detected]
+    if (!cc_failsafe_check(false)) {
+        check_failed(true, "CC not detected");
         return false;
     }
 

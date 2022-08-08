@@ -1079,6 +1079,22 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_GROUPINFO("LAND_TERR_UND", 47, ParametersG2, land_consider_local_Terr_und, 50), 
 #endif
 
+    // @Param: FS_CC_ENABLE
+    // @DisplayName: Companion Computer Failsafe Enable (only RTL)
+    // @Description: Controls whether failsafe will be invoked (will switch model to RTL) when connection with Companion Computer is lost for at least 5 seconds.
+    // @Values: 0:Disabled/NoAction,1:RTL
+    // @User: Standard
+    AP_GROUPINFO("FS_CC_ENABLE", 48, ParametersG2, failsafe_cc, 0),
+
+    // @Param: FS_CC__TIMEOUT
+    // @DisplayName: Companion Computer failsafe timeout
+    // @Description: Timeout before triggering the CC failsafe
+    // @Units: s
+    // @Range: 1 60
+    // @Increment: 1
+    // @User: Standard
+    AP_GROUPINFO("FS_CC_TIMEOUT", 49, ParametersG2, fs_cc_timeout, 5),
+
     AP_GROUPEND
 };
 
