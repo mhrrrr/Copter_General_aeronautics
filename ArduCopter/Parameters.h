@@ -654,6 +654,10 @@ public:
 AP_Int8     failsafe_cc;                // companion computer failsafe enable/behaviour
 AP_Int8     fs_cc_timeout;              // companion computer failsafe timeout (seconds)
 
+// enable gains reduction on take-off
+AP_Int8 enable_tkoff_gains_reduc;
+AP_Int16 gain_reduc_alt_max_cm;
+
 };
 
 extern const AP_Param::Info        var_info[];

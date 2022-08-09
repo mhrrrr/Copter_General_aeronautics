@@ -86,6 +86,9 @@ AC_PID::AC_PID(float initial_p, float initial_i, float initial_d, float initial_
     _slew_rate_max.set(initial_srmax);
     _slew_rate_tau.set(initial_srtau);
 
+    _kimod = _ki;
+    _enable_gain_reduc = false;
+
     // reset input filter to first value received
     _flags._reset_filter = true;
 
@@ -231,9 +234,13 @@ void AC_PID::update_i(bool limit)
 {
     if (!is_zero(_ki) && is_positive(_dt)) {
         // Ensure that integrator can only be reduced if the output is saturated
-        if (!limit || ((is_positive(_integrator) && is_negative(_error)) || (is_negative(_integrator) && is_positive(_error)))) {
-            _integrator += ((float)_error * _ki) * _dt;
-            _integrator = constrain_float(_integrator, -_kimax, _kimax);
+        if (!limit || ((is_positive(_integrator) && is_negative(_error)) || (is_negative(_integrator) && is_positive(_error)))) {           
+            // reducing/increasing the IMAX
+            _kimod = _enable_gain_reduc ? (float)0 : (float)_ki;
+
+            _integrator += ((float)_error * _kimod) * _dt;
+            _integrator = _enable_gain_reduc ? (float)0 : constrain_float(_integrator, -_kimax, _kimax);
+            limit = _enable_gain_reduc ? false : limit;
         }
     } else {
         _integrator = 0.0f;

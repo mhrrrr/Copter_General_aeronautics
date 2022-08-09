@@ -111,6 +111,10 @@ public:
     void set_integrator(float error, float i);
     void set_integrator(float i);
 
+    // limit the I value to reduced IMAX
+    bool _enable_gain_reduc;
+    float _kimod;
+    
     // set slew limiter scale factor
     void set_slew_limit_scale(int8_t scale) { _slew_limit_scale = scale; }
 

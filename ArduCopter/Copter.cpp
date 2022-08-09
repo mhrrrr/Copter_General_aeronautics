@@ -429,6 +429,7 @@ void Copter::throttle_loop()
     // compensate for ground effect (if enabled)
     update_ground_effect_detector();
     update_ekf_terrain_height_stable();
+    toggle_gain_reduc();
 }
 
 // update_batt_compass - read battery and compass
@@ -725,3 +726,44 @@ Copter copter;
 AP_Vehicle& vehicle = copter;
 
 AP_HAL_MAIN_CALLBACKS(&copter);
+
+void Copter::toggle_gain_reduc()
+{
+    int16_t en_tkoff_gain_reduc = constrain_int16(g2.enable_tkoff_gains_reduc.get(),0,1); // enable limiting attitude controller's I-gain during take-off
+    int16_t gain_reduc_altmax_cm = constrain_int16(g2.gain_reduc_alt_max_cm.get(),10,300); // altitude till which the I-gain is limited after take-off
+    int32_t inavAlt = copter.flightmode->get_alt_above_ground_cm();
+
+    if (en_tkoff_gain_reduc != (int16_t)g2.enable_tkoff_gains_reduc.get()) {
+        g2.enable_tkoff_gains_reduc.set_and_notify(en_tkoff_gain_reduc); // setting the parameter back within contraints if greater than the range defined
+    }
+    if (gain_reduc_altmax_cm != (int16_t)g2.gain_reduc_alt_max_cm.get()) {
+        g2.gain_reduc_alt_max_cm.set_and_notify(gain_reduc_altmax_cm); // setting the parameter back within contraints if greater than the range defined
+    } 
+
+    bool go_true = (inavAlt <= (10 + armed_alt_cm)) && 
+                    ((attitude_control->get_rate_roll_pid()._enable_gain_reduc == false) || (attitude_control->get_rate_pitch_pid()._enable_gain_reduc == false));
+    bool go_false = (inavAlt > (gain_reduc_altmax_cm + armed_alt_cm)) && 
+                    ((attitude_control->get_rate_roll_pid()._enable_gain_reduc == true) || (attitude_control->get_rate_pitch_pid()._enable_gain_reduc == true));
+
+    if ((prev_armed_state == 0) && (copter.motors->armed())) {
+        go_true = true;
+        prev_armed_state = 1;
+        armed_alt_cm = inavAlt;
+    } else if ((prev_armed_state == 1) && (!copter.motors->armed())) {
+        go_true = true;
+        prev_armed_state = 0;
+        armed_alt_cm = 0;
+    }
+
+    if ((en_tkoff_gain_reduc == 1) && copter.motors->armed()) {
+        if (go_true) {
+            GCS_SEND_TEXT(MAV_SEVERITY_INFO,"Limiting Pitch/Roll rates IGAIN");
+            attitude_control->get_rate_roll_pid()._enable_gain_reduc = true;
+            attitude_control->get_rate_pitch_pid()._enable_gain_reduc = true;
+        } else if (go_false) {
+            GCS_SEND_TEXT(MAV_SEVERITY_INFO,"De-limiting Pitch/Roll rates IGAIN");
+            attitude_control->get_rate_roll_pid()._enable_gain_reduc = false;
+            attitude_control->get_rate_pitch_pid()._enable_gain_reduc = false;
+        }
+    }
+}

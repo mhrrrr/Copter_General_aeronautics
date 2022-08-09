@@ -223,6 +223,11 @@ public:
 
     Copter(void);
 
+    // at take-off, reduce the IGAIN when below set altitude
+    int8_t prev_armed_state = 0;
+    int16_t armed_alt_cm = 0;
+    void toggle_gain_reduc();
+
 private:
 
     // key aircraft parameters passed to multiple libraries
