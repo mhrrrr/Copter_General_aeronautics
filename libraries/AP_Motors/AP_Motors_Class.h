@@ -70,7 +70,11 @@ public:
         MOTOR_FRAME_TYPE_NYT_X = 17, // X frame, no differential torque for yaw
         MOTOR_FRAME_TYPE_BF_X_REV = 18, // X frame, betaflight ordering, reversed motors
         MOTOR_FRAME_TYPE_CA02 = 19, // GA CA02 frame
-        MOTOR_FRAME_TYPE_CA04 = 20 // GA CA04 (corrected) frame
+        MOTOR_FRAME_TYPE_CA04 = 20,                // GA CA04 (cg corrected) frame
+        MOTOR_FRAME_TYPE_CA04_CGMOD = 21,          // GA CA04 (cg correction removed) frame
+        MOTOR_FRAME_TYPE_CA04_CGMOD_YAWRED75 = 22, // GA CA04 (cg correction removed) frame & Yaw reduction of Mot1,2 to 75%
+        MOTOR_FRAME_TYPE_CA04_CGMOD_YAWRED50 = 23, // GA CA04 (cg correction removed) frame & Yaw reduction of Mot1,2 to 50%
+        MOTOR_FRAME_TYPE_CA04_CGMOD_YAWRED00 = 24  // GA CA04 (cg correction removed) frame & Yaw reduction of Mot1,2 to 00%
     };
 
     // return string corresponding to frame_type

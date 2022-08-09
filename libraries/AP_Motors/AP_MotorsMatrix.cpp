@@ -781,6 +781,42 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
                 	add_motor_raw(AP_MOTORS_MOT_6, -0.8287, -0.4443+0.047, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 3);
 					success = true;
                     break;
+                case MOTOR_FRAME_TYPE_CA04_CGMOD: //GA CA04 (cg correction removed) frame
+                	add_motor_raw(AP_MOTORS_MOT_1, 0, 0.765, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 1);
+                	add_motor_raw(AP_MOTORS_MOT_2, 0, -0.765, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+                	add_motor_raw(AP_MOTORS_MOT_3, 0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+                	add_motor_raw(AP_MOTORS_MOT_4, -0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+                	add_motor_raw(AP_MOTORS_MOT_5, 0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+                	add_motor_raw(AP_MOTORS_MOT_6, -0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 3);
+					success = true;
+                    break;
+                case MOTOR_FRAME_TYPE_CA04_CGMOD_YAWRED75: //GA CA04 (cg correction removed) frame & Yaw reduction of Mot1,2 to 75%
+                	add_motor_raw(AP_MOTORS_MOT_1, 0, 0.765, 0.75*AP_MOTORS_MATRIX_YAW_FACTOR_CW, 1);
+                	add_motor_raw(AP_MOTORS_MOT_2, 0, -0.765, 0.75*AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+                	add_motor_raw(AP_MOTORS_MOT_3, 0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+                	add_motor_raw(AP_MOTORS_MOT_4, -0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+                	add_motor_raw(AP_MOTORS_MOT_5, 0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+                	add_motor_raw(AP_MOTORS_MOT_6, -0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 3);
+					success = true;
+                    break;
+                case MOTOR_FRAME_TYPE_CA04_CGMOD_YAWRED50: //GA CA04 (cg correction removed) frame & Yaw reduction of Mot1,2 to 50%
+                	add_motor_raw(AP_MOTORS_MOT_1, 0, 0.765, 0.50*AP_MOTORS_MATRIX_YAW_FACTOR_CW, 1);
+                	add_motor_raw(AP_MOTORS_MOT_2, 0, -0.765, 0.50*AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+                	add_motor_raw(AP_MOTORS_MOT_3, 0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+                	add_motor_raw(AP_MOTORS_MOT_4, -0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+                	add_motor_raw(AP_MOTORS_MOT_5, 0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+                	add_motor_raw(AP_MOTORS_MOT_6, -0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 3);
+					success = true;
+                    break;
+                case MOTOR_FRAME_TYPE_CA04_CGMOD_YAWRED00: //GA CA04 (cg correction removed) frame & Yaw reduction of Mot1,2 to 00%
+                	add_motor_raw(AP_MOTORS_MOT_1, 0, 0.765, 0.00*AP_MOTORS_MATRIX_YAW_FACTOR_CW, 1);
+                	add_motor_raw(AP_MOTORS_MOT_2, 0, -0.765, 0.00*AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+                	add_motor_raw(AP_MOTORS_MOT_3, 0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+                	add_motor_raw(AP_MOTORS_MOT_4, -0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+                	add_motor_raw(AP_MOTORS_MOT_5, 0.8287, 0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+                	add_motor_raw(AP_MOTORS_MOT_6, -0.8287, -0.4443, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 3);
+					success = true;
+                    break;
                 default:
                     // hexa frame class does not support this frame type
                     _frame_type_string = "UNSUPPORTED";
