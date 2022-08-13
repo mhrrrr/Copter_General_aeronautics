@@ -604,8 +604,8 @@ bool AP_Arming_Copter::gcs_failsafe_check(bool display_failure)
 bool AP_Arming_Copter::cc_failsafe_check(bool display_failure)
 {
     uint32_t cc_last_seen_ms = gcs().sysid_mycc_last_seen_time_ms();
-    if ((cc_last_seen_ms == 0 || cc_last_seen_ms <= (millis()-1000)) && (copter.g2.failsafe_cc == 1)) {
-        check_failed(display_failure, "CC Failsafe");
+    if ((cc_last_seen_ms == 0 || cc_last_seen_ms <= (millis()-2000)) && (copter.g2.failsafe_cc == 1)) {
+        check_failed(display_failure, "Waiting for CC connection");
         return false;
     }
     return true;
