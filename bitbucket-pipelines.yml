@@ -17,7 +17,8 @@ definitions:
         script:
           - echo "Setting up release name..."
           - export RELEASE_NAME=""
-          - if [[ ! -z $BITBUCKET_TAG && -z $RELEASE_NAME ]]; then export RELEASE_NAME=$BITBUCKET_TAG; fi
+          - export FILE_NAME="arducopter_${BITBUCKET_COMMIT:0:8}"
+          - if [[ ! -z $BITBUCKET_TAG && -z $RELEASE_NAME ]]; then export RELEASE_NAME=$BITBUCKET_TAG; export FILE_NAME="${RELEASE_NAME//ga_/ardu}"; fi
           - if [[ ! -z $BITBUCKET_BRANCH && -z $RELEASE_NAME ]]; then export RELEASE_NAME=${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\); fi
           - if [[ ! -z $BITBUCKET_COMMIT && -z $RELEASE_NAME ]]; then export RELEASE_NAME=$BITBUCKET_COMMIT; fi
           - echo "Build release name = $RELEASE_NAME"
