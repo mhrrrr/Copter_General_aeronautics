@@ -9,6 +9,41 @@ This document includes highlights of custom changes done over and above 4.1.1 fo
 ============================================================================================================
 
 
+GA Copter 4.1.1 v5
+------------------------------------------------------------------------------------------------------------
+Functionality:
+1. In GPS-dependent modes (viz. Auto, Loiter, Guided), vehicle now arms only if "GPS RTX fix" is available
+   	i.e. the system checks for GPS status '5' for arming the vehicle.
+		Note: This check has to be enabled by checking "GPS lock" bitmask under "ARMING_CHECK" parameter.
+2. Added CC Failsafe.
+	i.e. When trying to Arm, if Companion Computer's heartbeat is not detected (within the last 2 seconds), 
+							 ArduCopter voids the arm command.
+		 After Arming,    	 if Companion Computer's heartbeat is not detected (for FS_CC_TIMEOUT seconds), 
+		 					 ArduCopter triggers RTL.
+	Note: Enabled using parameters,
+			"FS_CC_ENABLE"  : =0 disables failsafe; =1 enables failsafe
+			"FS_CC_TIMEOUT" : Without CC heartbeat, FCS waits this long to trigger the failsafe.
+							  Range is [1,60]seconds.
+3. During Takeoff, the I-gains of the Pitch & Roll rate-controller are made zero 
+	(thus, preventing error accumulation until after take-off).
+	Note: Enabled using parameters,
+			"TKOFF_IGL_ENABLE" : =0 disables functionality; =1 enables functionality
+			"TKOFF_IGL_ALTMAX" : After arming, only until this altitude, the I-gains are made zero.
+								 After attaining this height above the arming point, the gains revert back.
+							  	 Range is [10,300]cm.
+4. Modified the "NPNT not Initialized" message to "Awaiting arming clearance from CC".
+5. Following MAVLink messages added (in the MAVLink submodule currently linked to GA’s MAVLink repo):
+	a. Message ID = 7004; Name = GA_COMMAND
+	b. Message ID = 7005; Name = GA_COMMAND_ACK
+
+Controls:
+1. New CA04 frames types added: 
+	a. FRAME_TYPE = 21 : CA04 (non-CG Corrected) airframe
+	a. FRAME_TYPE = 22 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 75%
+	a. FRAME_TYPE = 23 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 50%
+	a. FRAME_TYPE = 24 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 0%
+
+
 GA Copter 4.1.1 v4
 ------------------------------------------------------------------------------------------------------------
 Functionality:
