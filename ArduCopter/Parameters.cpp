@@ -1095,21 +1095,21 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("FS_CC_TIMEOUT", 49, ParametersG2, fs_cc_timeout, 5),
 
-    // @Param: TKOFF_IGL_EN
+    // @Param: TKOFF_IGL_ENABLE
     // @DisplayName: Reduce angular rates I_GAIN at take-off
-    // @Description: Reduce the attitude-rate controller's gains to 0% of actual during take-off (until TKOFF_LIM_IGAIN_ALT cm AGL)
+    // @Description: Reduce the attitude-rate controller's gains to 0% of actual during take-off (until TKOFF_IGL_ALTMAX cm AGL)
     // @Range: 0 1
     // @Increment: 1
     // @User: Advanced
-    AP_GROUPINFO("TKOFF_IGL_EN", 50, ParametersG2, enable_tkoff_gains_reduc, 0), 
+    AP_GROUPINFO("TKOFF_IGL_ENABLE", 50, ParametersG2, enable_tkoff_gains_reduc, 1), 
 
     // @Param: TKOFF_IGL_ALTMAX
     // @DisplayName: Reduce angular rates I_GAIN till this altitude after take-off
-    // @Description: Reduction in angular rates I_GAIN at take-off is active until TKOFF_LIM_IGAIN_ALT (cm) AGL
+    // @Description: Reduction in angular rates I_GAIN at take-off is active until TKOFF_IGL_ALTMAX (cm) AGL
     // @Range: 10 300
     // @Increment: 10
     // @User: Advanced
-    AP_GROUPINFO("TKOFF_IGL_ALTMAX", 51, ParametersG2, gain_reduc_alt_max_cm, 30), 
+    AP_GROUPINFO("TKOFF_IGL_ALTMAX", 51, ParametersG2, gain_reduc_alt_max_cm, 100), 
 
     AP_GROUPEND
 };
