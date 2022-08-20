@@ -628,6 +628,13 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] = {
     
 #endif // HAL_INS_TEMPERATURE_CAL_ENABLE
 
+    // @Param: ACC_NOTCH_EN
+    // @DisplayName: Enable the "Gyro Notch & Harmonic filter" for Accelerometer
+    // @Description: If Gyroscope Notch & Harmonic filters are used, then this option enables the same filter in Accelerometer also.
+    // @Values: 0:Disabled,1:Enabled
+    // @User: Advanced
+    AP_GROUPINFO("ACC_NOTCH_EN", 53, AP_InertialSensor, enable_accel_notch, 1), 
+
     /*
       NOTE: parameter indexes have gaps above. When adding new
       parameters check for conflicts carefully
@@ -870,6 +877,13 @@ AP_InertialSensor::init(uint16_t loop_rate)
              _harmonic_notch_filter.bandwidth_hz(), _harmonic_notch_filter.attenuation_dB());
     }
 
+    for (uint8_t i=0; i<get_accel_count(); i++) {
+        _accel_harmonic_notch_filter[i].allocate_filters(_harmonic_notch_filter.harmonics(), _harmonic_notch_filter.hasOption(HarmonicNotchFilterParams::Options::DoubleNotch));
+        // initialise default settings, these will be subsequently changed in AP_InertialSensor_Backend::update_gyro() [Note: ]
+        _accel_harmonic_notch_filter[i].init(_accel_raw_sample_rates[i], _calculated_harmonic_notch_freq_hz[0],
+             _harmonic_notch_filter.bandwidth_hz(), _harmonic_notch_filter.attenuation_dB());
+    }
+
 #if HAL_INS_TEMPERATURE_CAL_ENABLE
     /*
       see if user has setup for on-boot enable of temperature learning
@@ -889,6 +903,9 @@ bool AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
     if (_backend_count == INS_MAX_BACKENDS) {
         AP_HAL::panic("Too many INS backends");
     }
+    if (enable_accel_notch) {
+        backend->accel_notch_enabled = true;
+    }   
     _backends[_backend_count++] = backend;
     return true;
 }

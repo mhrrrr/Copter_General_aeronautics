@@ -80,6 +80,9 @@ public:
     // get a startup banner to output to the GCS
     virtual bool get_output_banner(char* banner, uint8_t banner_len) { return false; }
 
+    // enable notch filtering in Accelerometers
+    bool accel_notch_enabled = false;
+
 #if HAL_EXTERNAL_AHRS_ENABLED
     virtual void handle_external(const AP_ExternalAHRS::ins_data_message_t &pkt) {}
 #endif

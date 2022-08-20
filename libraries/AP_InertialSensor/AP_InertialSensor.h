@@ -496,13 +496,18 @@ private:
     bool _new_accel_data[INS_MAX_INSTANCES];
     bool _new_gyro_data[INS_MAX_INSTANCES];
 
+    // enable notch filters for Accelerometers
+    AP_Int8 enable_accel_notch;
+
     // optional notch filter on gyro
     NotchFilterParams _notch_filter;
     NotchFilterVector3f _gyro_notch_filter[INS_MAX_INSTANCES];
+    NotchFilterVector3f _accel_notch_filter[INS_MAX_INSTANCES];
 
     // optional harmonic notch filter on gyro
     HarmonicNotchFilterParams _harmonic_notch_filter;
     HarmonicNotchFilterVector3f _gyro_harmonic_notch_filter[INS_MAX_INSTANCES];
+    HarmonicNotchFilterVector3f _accel_harmonic_notch_filter[INS_MAX_INSTANCES];
     // the current center frequency for the notch
     float _calculated_harmonic_notch_freq_hz[INS_MAX_NOTCHES];
     uint8_t _num_calculated_harmonic_notch_frequencies;
