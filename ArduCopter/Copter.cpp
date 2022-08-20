@@ -740,7 +740,7 @@ void Copter::toggle_gain_reduc()
         g2.gain_reduc_alt_max_cm.set_and_notify(gain_reduc_altmax_cm); // setting the parameter back within contraints if greater than the range defined
     } 
 
-    bool go_true = (inavAlt <= (10 + armed_alt_cm)) && 
+    bool go_true =  ap.land_complete && 
                     ((attitude_control->get_rate_roll_pid()._enable_gain_reduc == false) || (attitude_control->get_rate_pitch_pid()._enable_gain_reduc == false));
     bool go_false = (inavAlt > (gain_reduc_altmax_cm + armed_alt_cm)) && 
                     ((attitude_control->get_rate_roll_pid()._enable_gain_reduc == true) || (attitude_control->get_rate_pitch_pid()._enable_gain_reduc == true));
@@ -748,7 +748,6 @@ void Copter::toggle_gain_reduc()
     if ((prev_armed_state == 0) && (copter.motors->armed())) {
         go_true = true;
         prev_armed_state = 1;
-        armed_alt_cm = inavAlt;
     } else if ((prev_armed_state == 1) && (!copter.motors->armed())) {
         go_true = true;
         prev_armed_state = 0;
@@ -760,6 +759,7 @@ void Copter::toggle_gain_reduc()
             GCS_SEND_TEXT(MAV_SEVERITY_INFO,"Limiting Pitch/Roll rates IGAIN");
             attitude_control->get_rate_roll_pid()._enable_gain_reduc = true;
             attitude_control->get_rate_pitch_pid()._enable_gain_reduc = true;
+            armed_alt_cm = inavAlt; // gains limiting happens only when the vehicle state switches between armed/disarmed or between landed/takeoff
         } else if (go_false) {
             GCS_SEND_TEXT(MAV_SEVERITY_INFO,"De-limiting Pitch/Roll rates IGAIN");
             attitude_control->get_rate_roll_pid()._enable_gain_reduc = false;
