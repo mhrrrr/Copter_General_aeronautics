@@ -178,6 +178,8 @@ public:
         float horizontal_accuracy;          ///< horizontal RMS accuracy estimate in m
         float vertical_accuracy;            ///< vertical RMS accuracy estimate in m
         float gps_yaw_accuracy;           ///< heading accuracy of the GPS in degrees
+        bool have_xyz_position;           ///< does GPS give latitude, longitude & altitude psoitions? Set to true only once available.
+        bool have_xyz_velocities;         ///< does GPS give horizontal and vertical velocities? Set to true only once available.        
         bool have_vertical_velocity;      ///< does GPS give vertical velocity? Set to true only once available.
         bool have_speed_accuracy;         ///< does GPS give speed accuracy? Set to true only once available.
         bool have_horizontal_accuracy;    ///< does GPS give horizontal position accuracy? Set to true only once available.
@@ -520,6 +522,8 @@ public:
         DoNotChange = 2,
     };
 
+    void setup_nmea_gps_timeout(bool check_status);
+
 protected:
 
     // configuration parameters
@@ -544,6 +548,7 @@ protected:
     AP_Float _blend_tc;
     AP_Int16 _driver_options;
     AP_Int8 _primary;
+    AP_Float _gps_msg_timeout_sec;           // No NMEA GPS messages timeout duration
 #if GPS_MAX_RECEIVERS > 1 && HAL_ENABLE_LIBUAVCAN_DRIVERS
     AP_Int32 _node_id[GPS_MAX_RECEIVERS];
     AP_Int32 _override_node_id[GPS_MAX_RECEIVERS];

@@ -377,6 +377,14 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     AP_GROUPINFO("2_CAN_OVRIDE", 31, AP_GPS, _override_node_id[1], 0),
 #endif
 
+    // @Param: _MSG_TIMEOUT
+    // @DisplayName: NMEA-GPS message timeout duration (seconds)
+    // @Description: If the GPS messages come redundant for this duration, then a message timeout warning is sent. Does not affect any functionality.
+    // @Increment: 0.1
+    // @Values: 0.5 to 10 seconds
+    // @User: Advanced
+    AP_GROUPINFO("_MSG_TIMEOUT", 32, AP_GPS, _gps_msg_timeout_sec, 1),
+
     AP_GROUPEND
 };
 
@@ -2023,3 +2031,20 @@ AP_GPS &gps()
 }
 
 };
+
+// whether to enable the "No GPS messages" timeout checks & also setting up timeout value (only for NMEA GPS)
+void AP_GPS::setup_nmea_gps_timeout(bool check_status)
+{
+    for (uint8_t i=0; i<num_instances; i++) {
+        if (drivers[i] != nullptr && (_type[i] == GPS_TYPE_NMEA ||
+                                      _type[i] == GPS_TYPE_HEMI ||
+                                      _type[i] == GPS_TYPE_ALLYSTAR)) {
+            drivers[i]->timeout_dur_ms = constrain_float(_gps_msg_timeout_sec,0.5,10)*1000; // constraining the parameter value within 0.5 & 10seconds
+
+            if (drivers[i]->enable_timeout_checks != check_status) {
+                drivers[i]->enable_timeout_checks = check_status;
+                drivers[i]->enable_timeout_checks ? GCS_SEND_TEXT(MAV_SEVERITY_INFO,"GPS %i: Enabled NMEA msg timeout checks",i) : GCS_SEND_TEXT(MAV_SEVERITY_INFO,"GPS %i: Disabled NMEA msg timeout checks",i);
+            }
+        }
+    }
+}

@@ -445,6 +445,11 @@ void Copter::update_batt_compass(void)
         compass.set_voltage(battery.voltage());
         compass.read();
     }
+
+    // enable no/redundant "NMEA GPS messages" timeout, after take-off
+    if (copter.motors->armed()) {
+        ap.land_complete ? copter.gps.setup_nmea_gps_timeout(false) : copter.gps.setup_nmea_gps_timeout(true);
+    }
 }
 
 // Full rate logging of attitude, rate and pid loops

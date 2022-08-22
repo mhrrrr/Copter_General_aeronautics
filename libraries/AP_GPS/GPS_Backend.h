@@ -90,6 +90,10 @@ public:
         UBX_Use115200     = (1U << 2U),
     };
 
+    // GPS NMEA message timeout parameters (only used in NMEA based GPS)
+    uint32_t timeout_dur_ms = 0;
+    bool enable_timeout_checks = false;
+
 protected:
     AP_HAL::UARTDriver *port;           ///< UART we are attached to
     AP_GPS &gps;                        ///< access to frontend (for parameters)

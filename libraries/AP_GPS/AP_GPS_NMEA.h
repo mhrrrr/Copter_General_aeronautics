@@ -156,6 +156,18 @@ private:
     uint32_t _last_fix_ms;
     uint32_t _last_VEL_ms = 0;
 
+    float _last_gps_yaw = 0;
+    float _last_vel_x = 0;
+    float _last_vel_y = 0;
+    float _last_vel_z = 0;
+    int32_t _last_pos_lat = 0;
+    int32_t _last_pos_lng = 0;
+    int32_t _last_pos_alt = 0;
+
+    uint32_t _last_yaw_changed_ms = 0;
+    uint32_t _last_vel_changed_ms = 0;
+    uint32_t _last_pos_changed_ms = 0;
+
     /// @name	Init strings
     ///			In ::init, an attempt is made to configure the GPS
     ///			unit to send just the messages that we are interested

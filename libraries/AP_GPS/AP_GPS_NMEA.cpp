@@ -30,6 +30,7 @@
 
 #include <AP_Common/AP_Common.h>
 #include <AP_Common/NMEA.h>
+#include <GCS_MAVLink/GCS.h>
 
 #include <ctype.h>
 #include <stdint.h>
@@ -236,17 +237,49 @@ bool AP_GPS_NMEA::_have_new_message()
         _last_VTG_ms = 1;
     }
 
-    if (now - _last_HDT_THS_ms > 300) {
-        // we have lost GPS yaw
-        state.have_gps_yaw = false;
-    }
-
     // handling VEL Message from Trimble MB Two
     if (_last_VEL_ms != 0 &&
         now - _last_VEL_ms > 300) {
-        // waiting for VEL
-        _have_gps_vel = false;
         return false;
+    }
+
+    if ((state.gps_yaw_configured == true) && 
+        (now - _last_HDT_THS_ms > 300)) {
+        // we have lost GPS yaw
+        return false;
+    }
+
+    // Performing (inelegant) GPS glitch detection
+    // Assuming it is practically impossible to send a constant GPS (position, velocity or Heading) value continuously, even if the vehicle is static
+    // With enable_timeout_checks and after a buffer of 10seconds since start-up, so that the GPS would get proper values before performing our timeout checks
+    if (enable_timeout_checks && (now > 10000)) {
+        if (now - _last_pos_changed_ms > timeout_dur_ms) {
+        // we have lost GPS position (value did not update for past 1 second)
+            //state.have_xyz_position = false;
+            if ((is_equal(fmod(now - _last_pos_changed_ms,5000),(double)0)) || (now - _last_pos_changed_ms <= timeout_dur_ms+80)) {
+                GCS_SEND_TEXT(MAV_SEVERITY_ALERT,"Switch to AltHold: GPSpos timeout");
+            }
+            //return false;
+        }
+
+        if (now - _last_vel_changed_ms > timeout_dur_ms) {
+        // we have lost GPS velocity (value did not update for past 1 second)
+            //state.have_xyz_velocities = false;
+            //state.have_vertical_velocity = false;
+            if ((is_equal(fmod(now - _last_vel_changed_ms,5000),(double)0)) || (now - _last_vel_changed_ms <= timeout_dur_ms+80)) {
+                GCS_SEND_TEXT(MAV_SEVERITY_ALERT,"Switch to AltHold: GPSvel timeout");
+            }
+            //return false;
+        }
+
+        if ((state.gps_yaw_configured == true) && (now - _last_yaw_changed_ms > timeout_dur_ms)) {
+        // we have lost GPS yaw (value did not update for past 1 second)
+            //state.have_gps_yaw = false;
+            if ((is_equal(fmod(now - _last_yaw_changed_ms,5000),(double)0)) || (now - _last_yaw_changed_ms <= timeout_dur_ms+80)) {
+                GCS_SEND_TEXT(MAV_SEVERITY_ALERT,"Switch to AltHold: GPSyaw timeout");
+            }
+            //return false;
+        }
     }
 
     // special case for fixing low output rate of ALLYSTAR GPS modules
@@ -299,11 +332,16 @@ bool AP_GPS_NMEA::_term_complete()
                     break;
                 case _GPS_SENTENCE_GGA:
                     _last_GGA_ms = now;
+                    _last_pos_lat = state.location.lat;
+                    _last_pos_lng = state.location.lng;
+                    _last_pos_alt = state.location.alt;
+                    // updating
                     state.location.alt  = _new_altitude;
                     state.location.lat  = _new_latitude;
                     state.location.lng  = _new_longitude;
                     state.num_sats      = _new_satellite_count;
                     state.hdop          = _new_hdop;
+                    state.have_xyz_position = true;
                     switch(_new_quality_indicator) {
                     case 0: // Fix not available or invalid
                         state.status = AP_GPS::NO_FIX;
@@ -330,6 +368,10 @@ bool AP_GPS_NMEA::_term_complete()
                         state.status = AP_GPS::GPS_OK_FIX_3D;
                         break;
                     }
+                    if (!is_equal(state.location.lat,_last_pos_lat) || !is_equal(state.location.lng,_last_pos_lng) || !is_equal(state.location.alt,_last_pos_alt)) {
+                        // velocity has changed since last VEL message
+                        _last_pos_changed_ms = now;
+                    }
                     break;
                 case _GPS_SENTENCE_VTG:
                     _last_VTG_ms = now;
@@ -342,13 +384,19 @@ bool AP_GPS_NMEA::_term_complete()
                     break;
                 case _GPS_SENTENCE_HDT:
                 case _GPS_SENTENCE_THS:
-                    _last_HDT_THS_ms = now;
                     if(_have_gps_yaw){
                         if (wrap_360(_new_gps_yaw*0.01f) > 0) {
+                            _last_gps_yaw = state.gps_yaw;
+                            // updating
                             state.gps_yaw = wrap_360(_new_gps_yaw*0.01f);
                             state.have_gps_yaw = true;
-                            state.gps_yaw_time_ms = AP_HAL::millis();
+                            state.gps_yaw_time_ms = now;
+                            _last_HDT_THS_ms = now;
                         }
+                    }
+                    if (!is_equal(state.gps_yaw,_last_gps_yaw)) {
+                        // heading has changed since last THS message
+                        _last_yaw_changed_ms = now;
                     }
                     // remember that we are setup to provide yaw. With
                     // a NMEA GPS we can only tell if the GPS is
@@ -358,11 +406,19 @@ bool AP_GPS_NMEA::_term_complete()
                     break;
                 case _GPS_SENTENCE_VEL:
                     if(_have_gps_vel){
+                        _last_vel_x = state.velocity.x;
+                        _last_vel_y = state.velocity.y;
+                        _last_vel_z = state.velocity.z;
+                        // updating
                         state.velocity.x = _vel_x;
                         state.velocity.y = _vel_y;
                         state.velocity.z = _vel_z;
                         state.have_vertical_velocity = true;
                         _last_VEL_ms = now;
+                    }
+                    if (!is_equal(state.velocity.x,_last_vel_x) || !is_equal(state.velocity.y,_last_vel_y) || !is_equal(state.velocity.z,_last_vel_z)) {
+                        // velocity has changed since last VEL message
+                        _last_vel_changed_ms = now;
                     }
                     break;
              /* case _GPS_SENTENCE_PHD:
