@@ -59,28 +59,33 @@ definitions:
           - echo "Copying/archiving the build files..."
           - 7z a Ardupilot_$RELEASE_NAME.zip Ardupilot_$RELEASE_NAME
           - echo "Moving release folder contents to artifacts folder"
-          - mkdir arti
+          - mkdir -p arti/S3_release
           - mv Ardupilot_$RELEASE_NAME arti
+          - mv Ardupilot_$RELEASE_NAME.zip arti
+          - cp arti/Ardupilot_$RELEASE_NAME/CubeOrange/arducopter.apj arti/S3_release/${FILE_NAME}.apj
+        artifacts:
+            - arti/**
+    - step: &UploadBuildToBitbucketDownloads
+        name: 'Upload the ArduCopter build to Bitbucket downloads'
+        script:
           - echo "Uploading to Bitbucket downloads..."
-          - pipe: atlassian/bitbucket-upload-file:0.3.2
+          - pipe: atlassian/bitbucket-upload-file:0.3.3
             variables:
               BITBUCKET_USERNAME: $BITBUCKET_USERNAME
               BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-              FILENAME: "Ardupilot_$RELEASE_NAME.zip"
-        artifacts:
-            - arti/**
+              FILENAME: "arti/*.zip"
     - step: &DeployBuildToAWSS3
         name: 'Deploy the ArduCopter build to AWS S3'
         deployment: Production
         script:
           - echo "Deploy the ArduCopter build to AWS S3..."
-          - pipe: atlassian/aws-s3-deploy:0.3.7
+          - pipe: atlassian/aws-s3-deploy:1.1.0
             variables:
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
               AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
               AWS_DEFAULT_REGION: 'ap-south-1'
-              S3_BUCKET: 'ardupilot-pipeline-test'
-              LOCAL_PATH: 'arti'
+              S3_BUCKET: 'ga-iris/FIRMWARE/Ardupilot'
+              LOCAL_PATH: 'arti/S3_release'
 
 
 
@@ -90,6 +95,7 @@ pipelines:
       - step: 
           <<: *APCopterbuild
           name: "Building GA's APcopter from tag"
+      - step: *UploadBuildToBitbucketDownloads
       - step: *DeployBuildToAWSS3
       
  custom:
@@ -97,10 +103,12 @@ pipelines:
       - step: 
           <<: *APCopterbuild
           name: "Building GA's APcopter from branch"
+      - step: *UploadBuildToBitbucketDownloads
    BuildAndDeployAPcopterToAWSS3: #AP copter build & deplot to AWS S3 pipeline (manual)
       - step: 
           <<: *APCopterbuild
           name: "Building GA's APcopter from branch"
+      - step: *UploadBuildToBitbucketDownloads
       - step: *DeployBuildToAWSS3
           
    BitbucketUploadTest: #Testing upload to Bitbucket repo (manual)
@@ -120,12 +128,31 @@ pipelines:
             - 7z a Ardupilot_${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\)_UpldTst.zip Ardupilot_$BITBUCKET_BRANCH
             - echo "Moving release folder contents to artifacts folder"
             - mkdir arti
-            - mv Ardupilot_$BITBUCKET_BRANCH arti
-            - echo "Uploading to Bitbucket downloads..."  
-            - pipe: atlassian/bitbucket-upload-file:0.3.2
-              variables:
-                BITBUCKET_USERNAME: $BITBUCKET_USERNAME
-                BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
-                FILENAME: "Ardupilot_${BITBUCKET_BRANCH}_(${BITBUCKET_COMMIT:0:8})_UpldTst.zip"
+            - mv Ardupilot_${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\)_UpldTst.zip arti
           artifacts:
             - arti/**
+      - step: *UploadBuildToBitbucketDownloads
+
+   AmazonS3UploadTest: #Testing upload to Amazon S3 bucket (manual)
+      - step:
+          name: 'Testing S3 bucket upload'
+          script:
+            - echo "Updating package repositories and installing packages..."
+            - apt update -y
+            - DEBIAN_FRONTEND=noninteractive apt install -y tzdata p7zip-rar
+            - echo "This is for testing uploads in bitbucket repo..." >> tsttext.txt
+            - mkdir -p Ardupilot_$BITBUCKET_BRANCH/test
+            - cp tsttext.txt Ardupilot_$BITBUCKET_BRANCH/test
+            - echo "test"
+            - echo -e "\n\n\nArdupilot-Copter original repository Release Note goes here >>\n" >> Ardupilot_$BITBUCKET_BRANCH/ReleaseNotes.txt
+            - cat ArduCopter/ReleaseNotes.txt >> Ardupilot_$BITBUCKET_BRANCH/ReleaseNotes.txt
+            - echo "Copying/archiving the files..."
+            - 7z a Ardupilot_${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\)_UpldTst.zip Ardupilot_$BITBUCKET_BRANCH
+            - mv Ardupilot_${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\)_UpldTst.zip Ardupilot_$BITBUCKET_BRANCH
+            - echo "Moving release folder contents to artifacts folder"
+            - mkdir -p arti/S3_release
+            - mv Ardupilot_$BITBUCKET_BRANCH arti
+            - cp arti/Ardupilot_$BITBUCKET_BRANCH/Ardupilot_${BITBUCKET_BRANCH}_\(${BITBUCKET_COMMIT:0:8}\)_UpldTst.zip arti/S3_release/test_upload.zip
+          artifacts:
+            - arti/**
+      - step: *DeployBuildToAWSS3
