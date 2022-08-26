@@ -1,5 +1,5 @@
 Title:		Release notes for FCS Release of 4.1.1
-Created By:	Aravind Vigneshwar, Dhruv, Sachchit
+Created By:	Aravind Vigneshwar, Sachchit
 
 ============================================================================================================
 
@@ -7,6 +7,35 @@ This FCS build is based on the ArduCopter 4.1.1 release. Release notes for the s
 This document includes highlights of custom changes done over and above 4.1.1 for specific GA functionality.
 
 ============================================================================================================
+
+
+GA Copter 4.1.1 v6
+------------------------------------------------------------------------------------------------------------
+Functionality:
+1. Warning notifications are shown whenever no or redundant GPS data is obtained. 
+	Data is considered redundant if latitude or longitude or Altitude or Heading or Velocity(Horizontal & Vertical)
+	messages from the GPS do not change continuously for "GPS_MSG_TIMEOUT" seconds.
+	Therefore,
+		If [latitude or longitude or Altitude] is redundant, then "Switch to AltHold: GPSpos timeout" is shown in GCS
+		If [Horizontal or Vertical velocities] is redundant, then "Switch to AltHold: GPSvel timeout" is shown in GCS
+		If [GPS Heading] 					   is redundant, then "Switch to AltHold: GPSyaw timeout" is shown in GCS
+	Note: "GPS_MSG_TIMEOUT" : The timeout duration that defines a redundant-GPS-message.
+							  Range is [0.5,10]seconds.
+2. Added prearm check for GPS yaw data.
+	If GPS yaw data does not change continuously (i.e. is redundant) for more than 3 seconds, 
+	then vehicle arming will be denied.
+		Note: This check has to be enabled by checking "GPS lock" bitmask under "ARMING_CHECK" parameter.
+3. Modified a logic used in "limiting I-gains during Takeoff" functionality.
+	For limiting the gain to zero, the [land_complete] status of the vehicle is used, instead of using 
+	[EKF_altitude = 0 approximately].
+
+Controls:
+1. Added Notch and Harmonic Notch filtering of Accelerometer data (earlier was available only to Gyro).
+	Note: Filtering of accelerometer data is done at the same frequencies as in Gyro, 
+		  and is enabled using the parameter,
+			"INS_ACC_NOTCH_EN" : =0 disables functionality; =1 enables functionality
+
+(Now, Parameter list file is included as a part of the "ArduCopter" folder)
 
 
 GA Copter 4.1.1 v5
@@ -37,11 +66,11 @@ Functionality:
 	b. Message ID = 7005; Name = GA_COMMAND_ACK
 
 Controls:
-1. New CA04 frames types added: 
+1. New CA04 frame types added: 
 	a. FRAME_TYPE = 21 : CA04 (non-CG Corrected) airframe
-	a. FRAME_TYPE = 22 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 75%
-	a. FRAME_TYPE = 23 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 50%
-	a. FRAME_TYPE = 24 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 0%
+	b. FRAME_TYPE = 22 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 75%
+	c. FRAME_TYPE = 23 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 50%
+	d. FRAME_TYPE = 24 : CA04 (non-CG Corrected) airframe with Yaw factors of Motors-1 & 2 reduced to 0%
 
 
 GA Copter 4.1.1 v4
