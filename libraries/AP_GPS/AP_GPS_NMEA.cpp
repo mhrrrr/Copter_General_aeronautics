@@ -246,7 +246,7 @@ bool AP_GPS_NMEA::_have_new_message()
     if ((state.gps_yaw_configured == true) && 
         (now - _last_HDT_THS_ms > 300)) {
         // we have lost GPS yaw
-        return false;
+        state.have_gps_yaw = false;
     }
 
     // Performing (inelegant) GPS glitch detection
@@ -282,6 +282,14 @@ bool AP_GPS_NMEA::_have_new_message()
         }
     }
 
+    // GPS data checks (status updated every 1second)
+    if ((state.gps_yaw_configured == true) && (now - _last_yaw_changed_ms > 3000)) {
+        // No proper GPS yaw update for past 3 seconds
+        gps_data_is_good = false;
+    } else {
+        gps_data_is_good = true;
+    }
+    
     // special case for fixing low output rate of ALLYSTAR GPS modules
  /* const int32_t dt_ms = now - _last_fix_ms;
     if (labs(dt_ms - gps._rate_ms[state.instance]) > 50 &&
@@ -393,11 +401,12 @@ bool AP_GPS_NMEA::_term_complete()
                             state.gps_yaw_time_ms = now;
                             _last_HDT_THS_ms = now;
                         }
+                        if (!is_equal(state.gps_yaw,_last_gps_yaw)) {
+                            // heading has changed since last THS message
+                            _last_yaw_changed_ms = now;
+                        }
                     }
-                    if (!is_equal(state.gps_yaw,_last_gps_yaw)) {
-                        // heading has changed since last THS message
-                        _last_yaw_changed_ms = now;
-                    }
+                    _have_gps_yaw = false;
                     // remember that we are setup to provide yaw. With
                     // a NMEA GPS we can only tell if the GPS is
                     // configured to provide yaw when it first sends a

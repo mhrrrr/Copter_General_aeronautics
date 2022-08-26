@@ -94,6 +94,9 @@ public:
     uint32_t timeout_dur_ms = 0;
     bool enable_timeout_checks = false;
 
+    // GPS data check status
+    bool gps_data_is_good = true;
+
 protected:
     AP_HAL::UARTDriver *port;           ///< UART we are attached to
     AP_GPS &gps;                        ///< access to frontend (for parameters)

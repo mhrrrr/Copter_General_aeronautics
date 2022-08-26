@@ -2048,3 +2048,24 @@ void AP_GPS::setup_nmea_gps_timeout(bool check_status)
         }
     }
 }
+
+// Query GPS data status (after checking GPS data)
+bool AP_GPS::gps_data_status(uint8_t instance, size_t buflen, char * buffer) const 
+{
+    if (instance < num_instances) {
+        if (drivers[instance]->gps_data_is_good) {
+            return true;
+        } else {
+            // this logic needs improvement (starting from GPS_backend side)
+            if (state[instance].gps_yaw_configured) {
+                strncpy(buffer, "bad GPS yaw data", buflen);
+            } else {
+                strncpy(buffer, "unknown reason", buflen);
+            }
+            return false;
+        }
+    }
+
+    strncpy(buffer, "No such GPS instance", buflen);
+    return false;
+}

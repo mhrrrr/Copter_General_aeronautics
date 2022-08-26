@@ -676,6 +676,19 @@ bool AP_Arming_Copter::arm_checks(AP_Arming::Method method)
     }
 #endif
 
+    // check if GPS data is good (as of now, only done for GPSyaw data)
+    if (checks_to_perform == ARMING_CHECK_ALL || checks_to_perform & ARMING_CHECK_GPS) {
+        char buffer[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1] {};
+        uint8_t gps_primary = AP::gps().primary_sensor();
+
+        if (!AP::gps().gps_data_status(gps_primary,sizeof(buffer), buffer)) {
+            GCS_SEND_TEXT(MAV_SEVERITY_WARNING, "Warning: Arming Denied, Reason: GPS");
+            check_failed(true, " GPS data check warning: %s",buffer);
+
+            return false;
+        }
+    }
+
     // always check if the current mode allows arming
     if (!copter.flightmode->allows_arming(method)) {
         check_failed(true, "Mode not armable");

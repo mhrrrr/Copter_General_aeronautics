@@ -524,6 +524,9 @@ public:
 
     void setup_nmea_gps_timeout(bool check_status);
 
+    // Query GPS data status (after checking GPS data)
+    bool gps_data_status(uint8_t instance, size_t buflen, char * buffer) const;
+
 protected:
 
     // configuration parameters
