@@ -385,6 +385,14 @@ const AP_Param::GroupInfo AP_GPS::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("_MSG_TIMEOUT", 32, AP_GPS, _gps_msg_timeout_sec, 1),
 
+    // @Param: _MSG_TMOUT_FS
+    // @DisplayName: NMEA-GPS message timeout duration for failsafe (seconds)
+    // @Description: If the GPS messages come redundant for this duration and not switched to AltHold, then triggers Land mode (NoGPS) after this duration since redundancy detection.
+    // @Increment: 0.1
+    // @Values: 5 to 20 seconds; 0 to disable
+    // @User: Advanced
+    AP_GROUPINFO("_MSG_TMOUT_FS", 33, AP_GPS, _fs_gps_msg_timeout_sec, 10),
+
     AP_GROUPEND
 };
 
@@ -2041,6 +2049,18 @@ void AP_GPS::setup_nmea_gps_timeout(bool check_status)
                                       _type[i] == GPS_TYPE_ALLYSTAR)) {
             drivers[i]->timeout_dur_ms = constrain_float(_gps_msg_timeout_sec,0.5,10)*1000; // constraining the parameter value within 0.5 & 10seconds
 
+            if (_fs_gps_msg_timeout_sec > 0) {
+                drivers[i]->fs_timeout_dur_ms = constrain_float(_fs_gps_msg_timeout_sec,5,20)*1000; // constraining the parameter value within 5 & 20seconds
+
+                if (drivers[i]->timeout_dur_ms >= drivers[i]->fs_timeout_dur_ms) {
+                    drivers[i]->timeout_dur_ms = constrain_float(drivers[i]->fs_timeout_dur_ms/1000-10,0.5,10)*1000;
+                    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"param: GPS_MSG_TIMEOUT >= GPS_MSG_TMOUT_FS, constrained GPS_MSG_TIMEOUT = %ums",(uint16_t)drivers[i]->timeout_dur_ms);
+                }
+            } else {
+                // If GPS_MSG_TMOUT_FS = 0, then disabling GPS-message-timeout failsafe
+                drivers[i]->fs_timeout_dur_ms = 0;
+            }
+
             if (drivers[i]->enable_timeout_checks != check_status) {
                 drivers[i]->enable_timeout_checks = check_status;
                 drivers[i]->enable_timeout_checks ? GCS_SEND_TEXT(MAV_SEVERITY_INFO,"GPS %i: Enabled NMEA msg timeout checks",i) : GCS_SEND_TEXT(MAV_SEVERITY_INFO,"GPS %i: Disabled NMEA msg timeout checks",i);
@@ -2068,4 +2088,16 @@ bool AP_GPS::gps_data_status(uint8_t instance, size_t buflen, char * buffer) con
 
     strncpy(buffer, "No such GPS instance", buflen);
     return false;
+}
+
+// check GPS failsafe status (only for NMEA GPS)
+bool AP_GPS::gps_failsafe_status(void) const
+{
+    bool fs_status = false;
+
+    for (uint8_t i=0; i<num_instances; i++) {
+        fs_status = fs_status || drivers[i]->gps_fs_trigger;
+    }
+
+    return fs_status;
 }

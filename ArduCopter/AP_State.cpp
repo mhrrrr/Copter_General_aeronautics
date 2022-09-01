@@ -86,6 +86,14 @@ void Copter::set_failsafe_cc(bool b)
         AP_Notify::flags.failsafe_cc = b;
 }
 
+void Copter::set_failsafe_gps(bool b)
+{
+    failsafe.gps = b;
+
+    // update AP_Notify
+        AP_Notify::flags.failsafe_gps = b;
+}
+
 // ---------------------------------------------
 
 void Copter::update_using_interlock()

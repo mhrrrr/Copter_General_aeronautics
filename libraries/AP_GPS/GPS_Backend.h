@@ -92,7 +92,9 @@ public:
 
     // GPS NMEA message timeout parameters (only used in NMEA based GPS)
     uint32_t timeout_dur_ms = 0;
+    uint32_t fs_timeout_dur_ms = 0;
     bool enable_timeout_checks = false;
+    bool gps_fs_trigger = false; // GPS failsafe trigger status setup
 
     // GPS data check status
     bool gps_data_is_good = true;

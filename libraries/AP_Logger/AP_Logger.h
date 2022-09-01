@@ -172,7 +172,7 @@ enum class LogErrorSubsystem : uint8_t {
     OPTFLOW = 4,   // not used
     FAILSAFE_RADIO = 5,
     FAILSAFE_BATT = 6,
-    FAILSAFE_GPS = 7,   // not used
+    FAILSAFE_GPS = 7,
     FAILSAFE_GCS = 8,
     FAILSAFE_FENCE = 9,
     FLIGHT_MODE = 10,
