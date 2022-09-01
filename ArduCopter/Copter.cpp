@@ -447,8 +447,10 @@ void Copter::update_batt_compass(void)
     }
 
     // enable no/redundant "NMEA GPS messages" timeout, after take-off
-    if (copter.motors->armed()) {
-        ap.land_complete ? copter.gps.setup_nmea_gps_timeout(false) : copter.gps.setup_nmea_gps_timeout(true);
+    if (copter.motors->armed() && !ap.land_complete) {
+        copter.gps.setup_nmea_gps_timeout(true);
+    } else {
+        copter.gps.setup_nmea_gps_timeout(false);
     }
 }
 
