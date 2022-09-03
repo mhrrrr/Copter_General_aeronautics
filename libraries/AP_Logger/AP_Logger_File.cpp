@@ -843,6 +843,7 @@ void AP_Logger_File::start_new_log(void)
     _writebuf.clear();
     write_fd_semaphore.give();
 
+    /* UPDATING THE NAME IN LAST_LOG.TXT FILE  does not work because of custom string name (actual log names are numeric)
     // now update lastlog.txt with the new log number
     char *fname = _lastlog_file_name();
 
@@ -864,6 +865,7 @@ void AP_Logger_File::start_new_log(void)
         _open_error_ms = AP_HAL::millis();
         return;
     }
+    */
 
     return;
 }
