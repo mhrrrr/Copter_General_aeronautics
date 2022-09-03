@@ -802,6 +802,12 @@ void AP_Logger_File::start_new_log(void)
         _write_filename = nullptr;        
     }
     _write_filename = _log_file_name(log_num);
+
+    char fnm[50] = "logs/00HGASG.BIN";
+    memcpy(_write_filename, fnm, sizeof fnm);
+
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"FNAME = %s",_write_filename);
+
     if (_write_filename == nullptr) {
         write_fd_semaphore.give();
         return;
@@ -1005,6 +1011,7 @@ void AP_Logger_File::io_timer(void)
 #endif
     }
 
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"filename = %s",_write_filename); //AV??!!
     write_fd_semaphore.give();
 }
 

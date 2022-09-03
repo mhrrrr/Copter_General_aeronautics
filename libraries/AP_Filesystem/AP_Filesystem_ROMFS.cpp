@@ -20,6 +20,7 @@
 #include <AP_HAL/AP_HAL.h>
 #include <AP_Math/AP_Math.h>
 #include <AP_ROMFS/AP_ROMFS.h>
+#include <GCS_MAVLink/GCS.h>
 
 #if defined(HAL_HAVE_AP_ROMFS_EMBEDDED_H)
 
@@ -209,6 +210,7 @@ int64_t AP_Filesystem_ROMFS::disk_space(const char *path)
  */
 bool AP_Filesystem_ROMFS::set_mtime(const char *filename, const uint32_t mtime_sec)
 {
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"ROMFS mtime");
     return false;
 }
 

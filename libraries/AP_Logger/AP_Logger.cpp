@@ -152,6 +152,7 @@ void AP_Logger::Init(const struct LogStructure *structures, uint8_t num_types)
     _structures = structures;
 
 #if HAL_LOGGING_FILESYSTEM_ENABLED
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "Filesystem logging");
     if (_params.backend_types & uint8_t(Backend_Type::FILESYSTEM)) {
         LoggerMessageWriter_DFLogStart *message_writer =
             new LoggerMessageWriter_DFLogStart();
@@ -171,6 +172,7 @@ void AP_Logger::Init(const struct LogStructure *structures, uint8_t num_types)
 #endif // HAL_LOGGING_FILESYSTEM_ENABLED
 
 #if HAL_LOGGING_DATAFLASH_ENABLED
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "Dataflash logging");
     if (_params.backend_types & uint8_t(Backend_Type::BLOCK)) {
         if (_next_backend == LOGGER_MAX_BACKENDS) {
             AP_HAL::panic("Too many backends");
@@ -213,6 +215,7 @@ void AP_Logger::Init(const struct LogStructure *structures, uint8_t num_types)
 #endif
     // the "main" logging type needs to come before mavlink so that index 0 is correct
 #if HAL_LOGGING_MAVLINK_ENABLED
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO, "MAVLINK logging");
     if (_params.backend_types & uint8_t(Backend_Type::MAVLINK)) {
         if (_next_backend == LOGGER_MAX_BACKENDS) {
             AP_HAL::panic("Too many backends");
@@ -1303,6 +1306,7 @@ void AP_Logger::io_thread(void)
 
         last_run_us = AP_HAL::micros();
 
+        //GCS_SEND_TEXT(MAV_SEVERITY_INFO,"io timer");
         FOR_EACH_BACKEND(io_timer());
     }
 }

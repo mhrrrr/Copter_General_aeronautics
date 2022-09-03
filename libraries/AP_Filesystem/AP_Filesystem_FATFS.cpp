@@ -6,6 +6,7 @@
 #include <AP_Math/AP_Math.h>
 #include <stdio.h>
 #include <AP_RTC/AP_RTC.h>
+#include <GCS_MAVLink/GCS.h>
 
 #if HAVE_FILESYSTEM_SUPPORT && CONFIG_HAL_BOARD == HAL_BOARD_CHIBIOS
 
@@ -822,9 +823,8 @@ bool AP_Filesystem_FATFS::set_mtime(const char *filename, const uint32_t mtime_s
     uint16_t fdate, ftime;
 
     unix_time_to_fat(mtime_sec, fdate, ftime);
-
-    fno.fdate = fdate;
-    fno.ftime = ftime;
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"FATFS mtime");
+    GCS_SEND_TEXT(MAV_SEVERITY_INFO,"fdate time = %i %i",fdate, ftime);
 
     FS_CHECK_ALLOWED(false);
     WITH_SEMAPHORE(sem);

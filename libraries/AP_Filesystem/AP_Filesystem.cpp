@@ -14,6 +14,7 @@
  */
 
 #include "AP_Filesystem.h"
+#include <GCS_MAVLink/GCS.h>
 
 static AP_Filesystem fs;
 
