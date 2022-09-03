@@ -293,8 +293,14 @@ private:
         // set surface to track
         void set_surface(Surface new_surface);
 
+        int32_t rangefinder_alt_min = 0;
+        int32_t rangefinder_alt_max = 0;
+        int32_t ekf_alt_min = 0;
+        int32_t ekf_alt_max = 0;
+
         // get valid rangefinder altitude (returns -1, when not valid/not available)
-        int32_t get_valid_rangefinder_alt() const;
+        int32_t get_valid_rangefinder_alt();
+        bool validate_rangefinder_sample(int32_t rangefinder_altitude);
 
     private:
         Surface surface = Surface::GROUND;

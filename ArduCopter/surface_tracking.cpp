@@ -104,7 +104,7 @@ void Copter::SurfaceTracking::set_surface(Surface new_surface)
 
 // this function essentially replicates logics defined function: Copter::SurfaceTracking::update_surface_offset()
 // get a valid rangefinder altitude (returns -1, when not valid/not available)
-int32_t Copter::SurfaceTracking::get_valid_rangefinder_alt() const
+int32_t Copter::SurfaceTracking::get_valid_rangefinder_alt()
 {
 #if RANGEFINDER_ENABLED == ENABLED  
     // Valid only if Rangefinder is terrain/ground facing
@@ -117,6 +117,10 @@ int32_t Copter::SurfaceTracking::get_valid_rangefinder_alt() const
             int32_t min_rngfnd_alt = copter.rangefinder.min_distance_cm_orient(ROTATION_PITCH_270); // min-reliably-measureable-distance of the rangefinder that is facing downwards
             int32_t rng_fnd_alt = (int32_t)rf_state.alt_cm; // RangeFinder Altitude
             int32_t rng_fnd_alt_filt = (int32_t)rf_state.alt_cm_filt.get(); // RangeFinder Altitude filtered
+
+            /*if (validate_rangefinder_sample(rng_fnd_alt_filt)) {
+
+            }*/
  
             if ((rng_fnd_alt >= min_rngfnd_alt) && (rng_fnd_alt <= max_rngfnd_alt)) {
                 return rng_fnd_alt_filt;       
@@ -129,3 +133,16 @@ int32_t Copter::SurfaceTracking::get_valid_rangefinder_alt() const
     return -1;
 #endif
 }
+
+/*
+bool Copter::SurfaceTracking::validate_rangefinder_sample(int32_t rangefinder_altitude)
+{
+    if (copter.motors->armed()) {
+        rangefinder_alt_min = MIN(rangefinder_altitude,rangefinder_alt_min);
+        rangefinder_alt_max = MAX(rangefinder_altitude,rangefinder_alt_max);
+        ekf_alt_min = MIN(get_alt_above_ground_cm(),ekf_alt_min);
+        ekf_alt_max = MAX(get_alt_above_ground_cm(),ekf_alt_max);
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO,"Heloooo...");
+        inertial_nav.get_altitude()
+    }
+}*/
