@@ -393,7 +393,7 @@ bool AP_GPS_NMEA::_term_complete()
                 case _GPS_SENTENCE_HDT:
                 case _GPS_SENTENCE_THS:
                     if(_have_gps_yaw){
-                        if (wrap_360(_new_gps_yaw*0.01f) > 0) {
+                        if (wrap_360(_new_gps_yaw*0.01f) >= 0) {
                             _last_gps_yaw = state.gps_yaw;
                             // updating
                             state.gps_yaw = wrap_360(_new_gps_yaw*0.01f);
