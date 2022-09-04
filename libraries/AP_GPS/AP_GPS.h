@@ -524,6 +524,9 @@ public:
 
     void setup_nmea_gps_timeout(bool check_status);
 
+    // Query GPS failsafe status
+    bool gps_failsafe_status(void) const;
+
     // Query GPS data status (after checking GPS data)
     bool gps_data_status(uint8_t instance, size_t buflen, char * buffer) const;
 
@@ -552,6 +555,7 @@ protected:
     AP_Int16 _driver_options;
     AP_Int8 _primary;
     AP_Float _gps_msg_timeout_sec;           // No NMEA GPS messages timeout duration
+    AP_Float _fs_gps_msg_timeout_sec;        // No NMEA GPS messages timeout duration to trigger failsafe
 #if GPS_MAX_RECEIVERS > 1 && HAL_ENABLE_LIBUAVCAN_DRIVERS
     AP_Int32 _node_id[GPS_MAX_RECEIVERS];
     AP_Int32 _override_node_id[GPS_MAX_RECEIVERS];

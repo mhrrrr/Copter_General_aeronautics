@@ -330,6 +330,87 @@ void Copter::failsafe_cc_off_event(void)
 }
 
 
+// failsafe_gps_check - check for GPS failsafe
+// copy/reuse of failsafe_gcs_check()
+void Copter::failsafe_gps_check()
+{
+    bool gps_fs_status = false;
+
+    // If not in AltHold mode, then gps_failsafe_status() is used to trigger failsafe
+    if (copter.get_mode() != (uint8_t)Mode::Number::ALT_HOLD) {
+        gps_fs_status = copter.gps.gps_failsafe_status();
+    }
+
+    // Determine which event to trigger
+    if (!gps_fs_status && failsafe.gps) {
+        // Recovery from a GPS failsafe
+        set_failsafe_gps(false);
+        failsafe_gps_off_event();
+
+    } else if (!gps_fs_status && !failsafe.gps) {
+        // No problem, do nothing
+
+    } else if (gps_fs_status && failsafe.gps) {
+        // Already in failsafe, do nothing
+
+    } else if (gps_fs_status && !failsafe.gps) {
+        // New GPS failsafe event, trigger events
+        set_failsafe_gps(true);
+        failsafe_gps_on_event();
+    }
+}
+
+
+// failsafe_gps_on_event
+// copy/reuse of failsafe_gcs_on_event()
+void Copter::failsafe_gps_on_event(void)
+{
+    AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_GPS, LogErrorCode::FAILSAFE_OCCURRED);
+    RC_Channels::clear_overrides();
+
+    // convert the desired failsafe response to the Failsafe_Action enum
+    Failsafe_Action desired_action;
+    desired_action = Failsafe_Action_Land;
+
+    // Conditions to deviate from FS_CC_ENABLE parameter setting
+    if (!motors->armed()) {
+        desired_action = Failsafe_Action_None;
+        gcs().send_text(MAV_SEVERITY_WARNING, "GPS Failsafe");
+
+    } else if (should_disarm_on_failsafe()) {
+        // should immediately disarm when we're on the ground
+        arming.disarm(AP_Arming::Method::GPSFAILSAFE);
+        desired_action = Failsafe_Action_None;
+        gcs().send_text(MAV_SEVERITY_WARNING, "GPS Failsafe -> Disarming");
+
+    } else if (flightmode->is_landing() && ((battery.has_failsafed() && battery.get_highest_failsafe_priority() <= FAILSAFE_LAND_PRIORITY))) {
+        // Allow landing to continue when battery failsafe requires it (not a user option)
+        gcs().send_text(MAV_SEVERITY_WARNING, "GPS + Battery Failsafe -> Continuing Landing");
+        desired_action = Failsafe_Action_Land;
+
+    } else if (flightmode->is_landing() && failsafe_option(FailsafeOption::CONTINUE_IF_LANDING)) {
+        // Allow landing to continue when FS_OPTIONS is set to continue landing
+        gcs().send_text(MAV_SEVERITY_WARNING, "GPS Failsafe -> Continuing Landing");
+        desired_action = Failsafe_Action_Land;
+
+    } else {
+        gcs().send_text(MAV_SEVERITY_WARNING, "GPS Failsafe");
+    }
+
+    // Call the failsafe action handler
+    do_failsafe_action(desired_action, ModeReason::GPS_FAILSAFE);
+}
+
+
+// failsafe_gps_off_event
+// copy/reuse of failsafe_gcs_off_event()
+void Copter::failsafe_gps_off_event(void)
+{
+    gcs().send_text(MAV_SEVERITY_WARNING, "GPS Failsafe Cleared");
+    AP::logger().Write_Error(LogErrorSubsystem::FAILSAFE_GPS, LogErrorCode::FAILSAFE_RESOLVED);
+}
+
+
 // executes terrain failsafe if data is missing for longer than a few seconds
 void Copter::failsafe_terrain_check()
 {

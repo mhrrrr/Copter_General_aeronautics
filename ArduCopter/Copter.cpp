@@ -447,8 +447,10 @@ void Copter::update_batt_compass(void)
     }
 
     // enable no/redundant "NMEA GPS messages" timeout, after take-off
-    if (copter.motors->armed()) {
-        ap.land_complete ? copter.gps.setup_nmea_gps_timeout(false) : copter.gps.setup_nmea_gps_timeout(true);
+    if (copter.motors->armed() && !ap.land_complete) {
+        copter.gps.setup_nmea_gps_timeout(true);
+    } else {
+        copter.gps.setup_nmea_gps_timeout(false);
     }
 }
 
@@ -537,6 +539,9 @@ void Copter::three_hz_loop()
 
     // check if we've lost contact with the companion computer
     failsafe_cc_check();
+
+    // check if we've lost proper GPS data & Pilot has still not switched to AltHold
+    failsafe_gps_check();
 
     // check if we've lost terrain data
     failsafe_terrain_check();

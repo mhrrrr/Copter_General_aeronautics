@@ -249,12 +249,12 @@ bool AP_GPS_NMEA::_have_new_message()
         state.have_gps_yaw = false;
     }
 
-    // Performing (inelegant) GPS glitch detection
-    // Assuming it is practically impossible to send a constant GPS (position, velocity or Heading) value continuously, even if the vehicle is static
-    // With enable_timeout_checks and after a buffer of 10seconds since start-up, so that the GPS would get proper values before performing our timeout checks
+    // Performing (inelegant) GPS glitch detection, after a buffer of 10seconds since start-up and with enable_timeout_checks=true, 
+    //                                              so that the GPS would get proper values before performing our timeout checks.
+    // Logic: Assuming it is practically impossible to send a constant GPS (position, velocity or Heading) value continuously, even if the vehicle is static.  
     if (enable_timeout_checks && (now > 10000)) {
         if (now - _last_pos_changed_ms > timeout_dur_ms) {
-        // we have lost GPS position (value did not update for past 1 second)
+        // we have lost GPS position (value did not update for past timeout_dur_ms second)
             //state.have_xyz_position = false;
             if ((is_equal(fmod(now - _last_pos_changed_ms,5000),(double)0)) || (now - _last_pos_changed_ms <= timeout_dur_ms+80)) {
                 GCS_SEND_TEXT(MAV_SEVERITY_ALERT,"Switch to AltHold: GPSpos timeout");
@@ -263,7 +263,7 @@ bool AP_GPS_NMEA::_have_new_message()
         }
 
         if (now - _last_vel_changed_ms > timeout_dur_ms) {
-        // we have lost GPS velocity (value did not update for past 1 second)
+        // we have lost GPS velocity (value did not update for past timeout_dur_ms second)
             //state.have_xyz_velocities = false;
             //state.have_vertical_velocity = false;
             if ((is_equal(fmod(now - _last_vel_changed_ms,5000),(double)0)) || (now - _last_vel_changed_ms <= timeout_dur_ms+80)) {
@@ -273,10 +273,16 @@ bool AP_GPS_NMEA::_have_new_message()
         }
 
         if ((state.gps_yaw_configured == true) && (now - _last_yaw_changed_ms > timeout_dur_ms)) {
-        // we have lost GPS yaw (value did not update for past 1 second)
+        // we have lost GPS yaw (value did not update for past timeout_dur_ms second)
             //state.have_gps_yaw = false;
             if ((is_equal(fmod(now - _last_yaw_changed_ms,5000),(double)0)) || (now - _last_yaw_changed_ms <= timeout_dur_ms+80)) {
                 GCS_SEND_TEXT(MAV_SEVERITY_ALERT,"Switch to AltHold: GPSyaw timeout");
+            }
+            
+            if ((fs_timeout_dur_ms > 0) && (now - _last_yaw_changed_ms > fs_timeout_dur_ms)) {
+                gps_fs_trigger = true;
+            } else {
+                gps_fs_trigger = false;
             }
             //return false;
         }

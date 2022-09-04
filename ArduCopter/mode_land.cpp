@@ -47,6 +47,8 @@ bool ModeLand::init(bool ignore_checks)
 // should be called at 100hz or more
 void ModeLand::run()
 {
+    control_position = AP_Notify::flags.failsafe_gps ? false : control_position;
+
     if (control_position) {
         gps_run();
     } else {
