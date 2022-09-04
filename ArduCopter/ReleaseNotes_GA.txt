@@ -8,6 +8,15 @@ This document includes highlights of custom changes done over and above 4.1.1 fo
 
 ============================================================================================================
 
+GA Copter 4.1.1 v7
+------------------------------------------------------------------------------------------------------------
+Functionality:
+1. Bug in the redundant GPS code is fixed. The bug used to give false alarm near Yaw = 0 and just after Takeoff
+	and just before land.
+2. If pilot don't react after warning to switch to althold and issues persist, the vehicle will trigger failsafe.
+	This will result in aircraft to land. Parameter to control time to trigger failsafe is GPS_MSG_TMOUT_FS.
+3. Parameter file version control is changed to .param file rather than .json file
+
 
 GA Copter 4.1.1 v6
 ------------------------------------------------------------------------------------------------------------
